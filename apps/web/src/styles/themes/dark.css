@@ -1,0 +1,34 @@
+/**
+ * Dark theme — semantic color mapping.
+ *
+ * NabhaVerse defaults to the dark, cosmic-brand theme, so these values
+ * also apply at `:root` before the theme preference has been read from
+ * `localStorage`/the OS, avoiding a flash of incorrectly themed content.
+ */
+@layer base {
+  :root,
+  :root[data-theme="dark"] {
+    --color-background: var(--color-neutral-950);
+    --color-foreground: var(--color-neutral-50);
+    --color-surface: var(--color-neutral-900);
+    --color-surface-muted: var(--color-neutral-800);
+    --color-border: var(--color-neutral-700);
+    --color-border-strong: var(--color-neutral-600);
+
+    --color-text-primary: var(--color-neutral-50);
+    --color-text-secondary: var(--color-neutral-400);
+    --color-text-muted: var(--color-neutral-500);
+    --color-text-inverse: var(--color-neutral-900);
+
+    --color-primary: var(--color-brand-400);
+    --color-primary-hover: var(--color-brand-300);
+    --color-primary-foreground: var(--color-neutral-950);
+
+    --color-success: var(--color-success-500);
+    --color-warning: var(--color-warning-500);
+    --color-destructive: var(--color-destructive-500);
+    --color-info: var(--color-info-500);
+
+    --color-focus-ring: var(--color-brand-400);
+  }
+}
