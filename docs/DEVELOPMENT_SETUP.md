@@ -37,6 +37,7 @@ Use the pattern:
 - `ci/<ticket-or-scope>`
 - `build/<ticket-or-scope>`
 - `infra/<ticket-or-scope>`
+- `copilot/<ticket-or-scope>`
 
 All branch names must be lowercase kebab-case after the prefix.
 
