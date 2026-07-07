@@ -3,6 +3,8 @@ name: Branch Naming
 on:
   pull_request:
 
+permissions: {}
+
 jobs:
   validate-branch-name:
     runs-on: ubuntu-latest
