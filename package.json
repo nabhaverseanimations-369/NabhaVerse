@@ -3,7 +3,8 @@
   "private": true,
   "packageManager": "pnpm@11.5.2",
   "scripts": {
-    "dev": "turbo dev --parallel",
+    "dev": "turbo run dev",
+    "dev:all": "./scripts/dev-all.sh",
     "build": "pnpm build:js && pnpm build:python",
     "build:js": "turbo run build",
     "build:python": "python -m compileall apps/api/src apps/workers/src",
