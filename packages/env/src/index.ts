@@ -19,6 +19,16 @@ export interface CreateEnvOptions<TShape extends ZodRawShape> {
 /** Type-safe, validated environment object inferred from a Zod schema. */
 export type Env<TShape extends ZodRawShape> = z.infer<z.ZodObject<TShape>>;
 
+function readProcessEnv(): Record<string, string | undefined> {
+  const candidate = globalThis as {
+    process?: {
+      env?: Record<string, string | undefined>;
+    };
+  };
+
+  return candidate.process?.env ?? {};
+}
+
 function formatIssues(error: z.ZodError): string {
   return error.issues
     .map((issue) => `  - ${issue.path.join(".") || "(root)"}: ${issue.message}`)
@@ -33,7 +43,7 @@ function formatIssues(error: z.ZodError): string {
  */
 export function createEnv<TShape extends ZodRawShape>({
   schema,
-  values = typeof process !== "undefined" ? process.env : {},
+  values = readProcessEnv(),
 }: CreateEnvOptions<TShape>): Env<TShape> {
   const result = schema.safeParse(values);
 

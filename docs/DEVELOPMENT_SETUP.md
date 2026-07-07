@@ -6,13 +6,12 @@ This guide covers how to set up your local development environment for **NabhaVe
 
 ## Prerequisites
 
-| Tool    | Version | Install                                                      |
-| ------- | ------- | ------------------------------------------------------------ |
-| Node.js | 22 LTS  | [nodejs.org](https://nodejs.org)                             |
-| pnpm    | 11.5.2  | `corepack enable && corepack prepare pnpm@11.5.2 --activate` |
-| Python  | 3.12+   | [python.org](https://www.python.org/)                        |
-| Docker  | latest  | [docker.com](https://www.docker.com/)                        |
-| Git     | latest  | [git-scm.com](https://git-scm.com)                           |
+| Tool    | Version | Install                            |
+| ------- | ------- | ---------------------------------- |
+| Node.js | 22.x    | [nodejs.org](https://nodejs.org)   |
+| pnpm    | 11.5.2  | `npm install -g pnpm`              |
+| Python  | 3.12+   | [python.org](https://python.org)   |
+| Git     | latest  | [git-scm.com](https://git-scm.com) |
 
 ---
 
@@ -26,27 +25,15 @@ cd NabhaVerse
 # Install dependencies
 pnpm install
 
+# Install Python tooling required by pnpm validate
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e '.[dev]'
+
 # Run validation (lint + typecheck + test + build)
 pnpm validate
 ```
-
-## Run Locally
-
-```bash
-# Full stack (web + api + worker + redis + postgres)
-pnpm dev:all
-
-# Web app (Next.js)
-pnpm dev
-
-# API service (FastAPI)
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e '.[dev]'
-uvicorn nabhaverse_api.main:app --host 0.0.0.0 --port 8000
-```
-
-`pnpm dev:all` expects Docker Desktop to be running and Python dependencies installed in `.venv`.
 
 ---
 
@@ -113,11 +100,10 @@ All pull requests targeting `main` or `develop` run the following checks:
 
 ## Scripts
 
-| Command          | Description                                               |
-| ---------------- | --------------------------------------------------------- |
-| `pnpm validate`  | Run all checks: lint, typecheck, test, build              |
-| `pnpm dev:all`   | Start full local stack: web, api, worker, redis, postgres |
-| `pnpm lint`      | Run ESLint / Ruff                                         |
-| `pnpm typecheck` | Run TypeScript type checks                                |
-| `pnpm test`      | Run test suite                                            |
-| `pnpm build`     | Build all packages                                        |
+| Command          | Description                                  |
+| ---------------- | -------------------------------------------- |
+| `pnpm validate`  | Run all checks: lint, typecheck, test, build |
+| `pnpm lint`      | Run ESLint / Ruff                            |
+| `pnpm typecheck` | Run TypeScript type checks                   |
+| `pnpm test`      | Run test suite                               |
+| `pnpm build`     | Build all packages                           |
