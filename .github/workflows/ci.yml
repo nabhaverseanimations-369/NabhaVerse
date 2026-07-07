@@ -26,13 +26,14 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Validate PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          title="${{ github.event.pull_request.title }}"
-          if [ -z "$title" ]; then
+          if [ -z "$PR_TITLE" ]; then
             echo "Error: PR title must not be empty."
             exit 1
           fi
-          normalized="$(echo "$title" | tr '[:upper:]' '[:lower:]')"
+          normalized="$(echo "$PR_TITLE" | tr '[:upper:]' '[:lower:]')"
           echo "chore: ${normalized}" | pnpm exec commitlint
 
   validate:
