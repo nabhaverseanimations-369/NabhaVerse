@@ -31,8 +31,9 @@ Unacceptable behavior includes harassment, discrimination, and disrespect.
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+
-- Python 3.10+
+
+- Node.js 22+
+- Python 3.12+
 - PostgreSQL 15+
 - Redis 7+
 - Git 2.30+
@@ -40,36 +41,34 @@ Unacceptable behavior includes harassment, discrimination, and disrespect.
 ### Setup Development Environment
 
 1. **Fork and clone the repository**
+
    ```bash
    git clone https://github.com/your-username/NabhaVerse.git
    cd NabhaVerse
    ```
 
 2. **Install dependencies**
+
    ```bash
    pnpm install
-   cd apps/api && pip install -r requirements.txt
+   python3 -m venv .venv
+   source .venv/bin/activate
+   python -m pip install --upgrade pip
+   python -m pip install -e '.[dev]'
    ```
 
 3. **Setup local environment**
+
    ```bash
    cp .env.example .env.local
    # Update .env.local with your local configuration
    ```
 
-4. **Run database migrations**
-   ```bash
-   cd apps/api
-   alembic upgrade head
-   ```
-
-5. **Start development servers**
+4. **Start development servers**
    ```bash
    # From root directory
    pnpm dev
    ```
-
-See [Local Setup Guide](./development/LOCAL_SETUP.md) for detailed instructions.
 
 ---
 
@@ -80,10 +79,11 @@ See [Local Setup Guide](./development/LOCAL_SETUP.md) for detailed instructions.
 Branches should follow this naming convention:
 
 ```
-<type>/<scope>/<description>
+<type>/<description>
 ```
 
 **Types:**
+
 - `feature` - New feature
 - `fix` - Bug fix
 - `docs` - Documentation
@@ -93,6 +93,7 @@ Branches should follow this naming convention:
 - `chore` - Build, dependencies, tooling
 
 **Examples:**
+
 ```
 feature/characters/master-profile
 fix/dashboard/loading-state
@@ -133,18 +134,10 @@ git checkout -b feature/characters/master-profile
    - Update CHANGELOG.md
 
 2. **Run all checks locally**
-   ```bash
-   # Frontend
-   cd apps/web
-   pnpm lint
-   pnpm type-check
-   pnpm test
 
-   # Backend
-   cd apps/api
-   ruff check .
-   black --check .
-   pytest
+   ```bash
+   # From repository root
+   pnpm validate
    ```
 
 3. **Ensure tests pass**
@@ -154,45 +147,51 @@ git checkout -b feature/characters/master-profile
 
 ### PR Title Format
 
-```
-<type>(<scope>): <subject>
-```
+PR titles can be written in natural language. CI normalizes titles by
+prefixing `chore:` before commitlint validation.
 
 **Examples:**
-- `feat(characters): add master profile API endpoint`
-- `fix(dashboard): resolve loading state bug`
-- `docs(api): update authentication guide`
-- `perf(search): optimize asset search queries`
+
+- `Add character master profile page`
+- `Fix dashboard loading state`
+- `Update authentication guide`
 
 ### PR Description Template
 
 ```markdown
 ## Description
+
 Brief description of changes
 
 ## Related Issues
+
 Closes #123
 
 ## Type of Change
+
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Breaking change
 - [ ] Documentation update
 
 ## Changes Made
+
 - Bullet point summary of changes
 - Another change
 
 ## Testing
+
 - [ ] Unit tests added/updated
 - [ ] Integration tests added/updated
 - [ ] E2E tests added/updated
 - [ ] Manual testing performed
 
 ## Screenshots (if applicable)
+
 Add screenshots for UI changes
 
 ## Checklist
+
 - [ ] Code follows style guidelines
 - [ ] Self-review completed
 - [ ] Comments added for complex logic
@@ -250,6 +249,7 @@ Add screenshots for UI changes
 ## Testing Requirements
 
 ### Test Coverage Targets
+
 - **Overall:** > 80%
 - **Critical paths:** 100%
 - **API endpoints:** 100%
@@ -259,24 +259,23 @@ Add screenshots for UI changes
 ### Test Types
 
 #### Unit Tests
-```bash
-# Frontend
-cd apps/web && pnpm test
 
-# Backend
-cd apps/api && pytest unit/
+```bash
+# From repository root
+pnpm test
 ```
 
 #### Integration Tests
+
 ```bash
-# Backend
-cd apps/api && pytest integration/
+# Python integration tests live under apps/api/tests and apps/workers/tests
+pytest
 ```
 
 #### E2E Tests
+
 ```bash
-# Frontend
-cd apps/web && pnpm test:e2e
+# Not yet configured in this foundation repository.
 ```
 
 ### Writing Tests
@@ -302,6 +301,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/) format:
 ```
 
 ### Type
+
 - `feat` - New feature
 - `fix` - Bug fix
 - `docs` - Documentation
@@ -312,17 +312,20 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/) format:
 - `chore` - Build, dependencies, tooling
 
 ### Subject
+
 - Imperative mood ("add" not "adds")
 - Lowercase first letter
 - No period at end
 - < 50 characters
 
 ### Body
+
 - Explain what and why, not how
 - Wrap at 72 characters
 - Separate from subject with blank line
 
 ### Footer
+
 - Reference issues: `Closes #123`
 - Breaking changes: `BREAKING CHANGE: description`
 
@@ -351,6 +354,7 @@ Closes #789
 ## Documentation
 
 ### When to Document
+
 - New features
 - API changes
 - Architecture decisions
