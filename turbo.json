@@ -21,6 +21,10 @@
         "^typecheck"
       ],
       "outputs": []
+    },
+    "storybook": {
+      "cache": false,
+      "persistent": true
     }
   }
 }

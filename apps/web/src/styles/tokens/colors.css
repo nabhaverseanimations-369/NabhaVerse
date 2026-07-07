@@ -1,0 +1,70 @@
+/**
+ * Raw color palette — global tokens.
+ *
+ * These are the atomic color values for NabhaVerse Studio's cosmic brand
+ * aesthetic. Application code should never reference these tokens
+ * directly; use the semantic tokens defined in `themes/light.css` and
+ * `themes/dark.css` instead.
+ */
+@layer base {
+  :root {
+    /* Brand */
+    --color-brand-50: oklch(97% 0.02 265);
+    --color-brand-100: oklch(93% 0.05 265);
+    --color-brand-200: oklch(86% 0.1 265);
+    --color-brand-300: oklch(77% 0.15 265);
+    --color-brand-400: oklch(66% 0.2 265);
+    --color-brand-500: oklch(55% 0.25 265);
+    --color-brand-600: oklch(46% 0.22 265);
+    --color-brand-700: oklch(37% 0.18 265);
+    --color-brand-800: oklch(28% 0.14 265);
+    --color-brand-900: oklch(20% 0.1 265);
+    --color-brand-950: oklch(13% 0.07 265);
+
+    /* Neutral */
+    --color-neutral-0: oklch(100% 0 0);
+    --color-neutral-50: oklch(98% 0 0);
+    --color-neutral-100: oklch(96% 0 0);
+    --color-neutral-200: oklch(91% 0 0);
+    --color-neutral-300: oklch(83% 0 0);
+    --color-neutral-400: oklch(66% 0 0);
+    --color-neutral-500: oklch(53% 0 0);
+    --color-neutral-600: oklch(43% 0 0);
+    --color-neutral-700: oklch(33% 0 0);
+    --color-neutral-800: oklch(23% 0 0);
+    --color-neutral-900: oklch(15% 0 0);
+    --color-neutral-950: oklch(9% 0 0);
+
+    /* Success */
+    --color-success-50: oklch(96% 0.05 150);
+    --color-success-100: oklch(91% 0.09 150);
+    --color-success-300: oklch(80% 0.14 150);
+    --color-success-500: oklch(65% 0.18 150);
+    --color-success-700: oklch(45% 0.15 150);
+    --color-success-900: oklch(28% 0.1 150);
+
+    /* Warning */
+    --color-warning-50: oklch(96% 0.05 85);
+    --color-warning-100: oklch(91% 0.1 85);
+    --color-warning-300: oklch(83% 0.16 85);
+    --color-warning-500: oklch(75% 0.19 85);
+    --color-warning-700: oklch(55% 0.17 85);
+    --color-warning-900: oklch(32% 0.11 85);
+
+    /* Destructive / error */
+    --color-destructive-50: oklch(96% 0.04 25);
+    --color-destructive-100: oklch(91% 0.08 25);
+    --color-destructive-300: oklch(78% 0.15 25);
+    --color-destructive-500: oklch(63% 0.22 25);
+    --color-destructive-700: oklch(45% 0.19 25);
+    --color-destructive-900: oklch(28% 0.13 25);
+
+    /* Info */
+    --color-info-50: oklch(96% 0.03 250);
+    --color-info-100: oklch(91% 0.06 250);
+    --color-info-300: oklch(79% 0.11 250);
+    --color-info-500: oklch(62% 0.19 250);
+    --color-info-700: oklch(45% 0.17 250);
+    --color-info-900: oklch(28% 0.12 250);
+  }
+}

@@ -1,0 +1,16 @@
+/**
+ * Z-index scale — keeps stacking contexts consistent across the app.
+ */
+@layer base {
+  :root {
+    --z-base: 0;
+    --z-dropdown: 1000;
+    --z-sticky: 1100;
+    --z-fixed: 1200;
+    --z-overlay: 1300;
+    --z-modal: 1400;
+    --z-popover: 1500;
+    --z-tooltip: 1600;
+    --z-toast: 1700;
+  }
+}

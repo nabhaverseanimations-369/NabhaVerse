@@ -1,5 +1,6 @@
 packages:
   - apps/web
+  - apps/storybook
   - packages/*
 allowBuilds:
   sharp: true

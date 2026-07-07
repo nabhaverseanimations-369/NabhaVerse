@@ -1,0 +1,33 @@
+/**
+ * Light theme — semantic color mapping.
+ *
+ * Components must only reference these semantic tokens, never the raw
+ * palette in `tokens/colors.css`, so the app responds correctly to
+ * theme changes.
+ */
+@layer base {
+  :root[data-theme="light"] {
+    --color-background: var(--color-neutral-50);
+    --color-foreground: var(--color-neutral-900);
+    --color-surface: var(--color-neutral-0);
+    --color-surface-muted: var(--color-neutral-100);
+    --color-border: var(--color-neutral-200);
+    --color-border-strong: var(--color-neutral-300);
+
+    --color-text-primary: var(--color-neutral-900);
+    --color-text-secondary: var(--color-neutral-600);
+    --color-text-muted: var(--color-neutral-400);
+    --color-text-inverse: var(--color-neutral-0);
+
+    --color-primary: var(--color-brand-500);
+    --color-primary-hover: var(--color-brand-600);
+    --color-primary-foreground: var(--color-neutral-0);
+
+    --color-success: var(--color-success-500);
+    --color-warning: var(--color-warning-500);
+    --color-destructive: var(--color-destructive-500);
+    --color-info: var(--color-info-500);
+
+    --color-focus-ring: var(--color-brand-300);
+  }
+}
