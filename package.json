@@ -1,0 +1,17 @@
+{
+  "name": "nabhaverse",
+  "version": "0.0.1",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "validate": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build",
+    "lint": "echo 'No lint targets yet'",
+    "typecheck": "echo 'No typecheck targets yet'",
+    "test": "echo 'No test targets yet'",
+    "build": "echo 'No build targets yet'"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0"
+  }
+}
