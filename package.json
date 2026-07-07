@@ -1,17 +1,37 @@
 {
-  "name": "nabhaverse",
-  "version": "0.0.1",
+  "name": "@nabhaverse/root",
   "private": true,
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@11.5.2",
   "scripts": {
-    "validate": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build",
-    "lint": "echo 'No lint targets yet'",
-    "typecheck": "echo 'No typecheck targets yet'",
-    "test": "echo 'No test targets yet'",
-    "build": "echo 'No build targets yet'"
+    "dev": "turbo dev --parallel",
+    "build": "pnpm build:js && pnpm build:python",
+    "build:js": "turbo run build",
+    "build:python": "python -m compileall apps/api/src apps/workers/src",
+    "lint": "pnpm lint:js && pnpm lint:python",
+    "lint:js": "turbo run lint",
+    "lint:python": "ruff check apps packages scripts && black --check apps packages scripts",
+    "typecheck": "pnpm typecheck:js && pnpm typecheck:python",
+    "typecheck:js": "turbo run typecheck",
+    "typecheck:python": "mypy apps",
+    "test": "pnpm test:js && pnpm test:python",
+    "test:js": "node --test scripts/tests/foundation.test.mjs",
+    "test:python": "pytest",
+    "format": "prettier --write . && black apps packages scripts",
+    "format:check": "prettier --check .",
+    "prepare": "husky",
+    "validate": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.0.0",
-    "@commitlint/config-conventional": "^19.0.0"
+    "@commitlint/cli": "21.2.0",
+    "@commitlint/config-conventional": "21.2.0",
+    "@eslint/js": "9.39.4",
+    "eslint": "9.39.4",
+    "globals": "17.7.0",
+    "husky": "9.1.7",
+    "lint-staged": "17.0.8",
+    "prettier": "3.9.4",
+    "turbo": "2.10.3",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.63.0"
   }
 }
