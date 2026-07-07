@@ -1,0 +1,19 @@
+name: Branch Naming
+
+on:
+  pull_request:
+
+permissions: {}
+
+jobs:
+  validate-branch-name:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate branch naming convention
+        env:
+          BRANCH_NAME: ${{ github.head_ref }}
+        run: |
+          if [[ ! "$BRANCH_NAME" =~ ^(feature|fix|chore|docs|refactor|test|ci|build|infra|copilot)\/[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+            echo "Branch name '$BRANCH_NAME' does not match the required convention."
+            exit 1
+          fi
