@@ -1,0 +1,57 @@
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nabhaverse-foundation"
+version = "0.1.0"
+description = "Foundation services for the NabhaVerse monorepo."
+readme = "docs/DEVELOPMENT_SETUP.md"
+requires-python = ">=3.12"
+dependencies = [
+  "celery==5.6.3",
+  "fastapi==0.139.0",
+  "pydantic==2.13.4",
+  "redis==8.0.1",
+  "sqlalchemy==2.0.51",
+  "uvicorn==0.50.2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "black==26.5.1",
+  "mypy==2.1.0",
+  "pytest==9.1.1",
+  "ruff==0.15.20",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [
+  "apps/api/src/nabhaverse_api",
+  "apps/workers/src/nabhaverse_workers",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = ["node_modules", ".next", "dist"]
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "UP"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+check_untyped_defs = true
+exclude = "(^node_modules/|^dist/|^\.next/)"
+
+[tool.pytest.ini_options]
+pythonpath = ["apps/api/src", "apps/workers/src"]
+testpaths = ["apps/api/tests", "apps/workers/tests"]
