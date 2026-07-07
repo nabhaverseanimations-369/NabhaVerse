@@ -47,7 +47,7 @@ const CONSOLE_METHOD: Record<LogLevel, "debug" | "info" | "warn" | "error"> = {
  * module/service, or the shared `logger` singleton for ad-hoc logging.
  */
 export class Logger {
-  private readonly context?: string;
+  private readonly context: string | undefined;
   private readonly minLevel: LogLevel;
 
   constructor(options: LoggerOptions = {}) {
@@ -96,7 +96,11 @@ export class Logger {
 
 /** Creates a new `Logger` scoped to the given context. */
 export function createLogger(context?: string, options?: Omit<LoggerOptions, "context">): Logger {
-  return new Logger({ ...options, context });
+  const loggerOptions: LoggerOptions = { ...options };
+  if (context !== undefined) {
+    loggerOptions.context = context;
+  }
+  return new Logger(loggerOptions);
 }
 
 /** Shared, unscoped logger instance for quick usage. */

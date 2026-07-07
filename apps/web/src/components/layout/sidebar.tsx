@@ -61,18 +61,18 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps): React.J
 }
 
 export function useSidebarCollapsed(): [boolean, (collapsed: boolean) => void] {
-  const [collapsed, setCollapsed] = React.useState(false);
-
-  React.useEffect(() => {
+  const [collapsed, setCollapsed] = React.useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
-      if (stored !== null) {
-        setCollapsed(stored === "true");
-      }
+      return stored !== null ? stored === "true" : false;
     } catch {
       // Ignore storage read failures (e.g. private browsing mode).
+      return false;
     }
-  }, []);
+  });
 
   const update = React.useCallback((next: boolean) => {
     setCollapsed(next);

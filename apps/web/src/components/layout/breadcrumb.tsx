@@ -26,7 +26,7 @@ function buildSegments(pathname: string): BreadcrumbSegment[] {
   }));
 }
 
-export interface BreadcrumbProps extends React.HTMLAttributes<HTMLElement> {}
+export type BreadcrumbProps = React.HTMLAttributes<HTMLElement>;
 
 /** Route-aware breadcrumb trail derived from the current pathname. */
 export function Breadcrumb({ className, ...props }: BreadcrumbProps): React.JSX.Element {
@@ -55,7 +55,10 @@ export function Breadcrumb({ className, ...props }: BreadcrumbProps): React.JSX.
                   {segment.label}
                 </span>
               ) : (
-                <Link href={segment.href} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">
+                <Link
+                  href={segment.href}
+                  className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+                >
                   {segment.label}
                 </Link>
               )}
