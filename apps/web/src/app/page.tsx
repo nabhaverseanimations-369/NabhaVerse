@@ -1,7 +1,5 @@
-export default function Home() {
-  return (
-    <main>
-      <p>NabhaVerse Studio foundation scaffold.</p>
-    </main>
-  );
+import { redirect } from "next/navigation";
+
+export default function Home(): never {
+  redirect("/login");
 }
