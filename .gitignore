@@ -4,7 +4,13 @@ node_modules/
 .turbo/
 .next/
 dist/
+build/
+.cache/
 *.tsbuildinfo
+
+# Generated frontend artifacts
+apps/web/coverage/
+apps/web/storybook-static/
 
 # Python
 .venv/
@@ -23,3 +29,6 @@ __pycache__/
 .DS_Store
 .idea/
 .vscode/
+
+# Local temporary files
+nabhaverse.db

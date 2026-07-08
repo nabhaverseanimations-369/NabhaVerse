@@ -1,21 +1,22 @@
 "use client";
 
 import * as React from "react";
-import { StudioDocumentEditor } from "@/components/studio";
-import { useCharacterWorkspaceState } from "@/features/character/state/character-workspace-state";
 
-interface CharacterDocumentEditorProps {
+import { StudioDocumentEditor } from "@/components/studio";
+import { useWorldWorkspaceState } from "@/features/world/state/world-workspace-state";
+
+interface WorldDocumentEditorProps {
   title: string;
   description: string;
   version: string;
 }
 
-export function CharacterDocumentEditor({
+export function WorldDocumentEditor({
   title,
   description,
   version,
-}: CharacterDocumentEditorProps): React.JSX.Element {
-  const { state, dispatch } = useCharacterWorkspaceState();
+}: WorldDocumentEditorProps): React.JSX.Element {
+  const { state, dispatch } = useWorldWorkspaceState();
 
   return (
     <StudioDocumentEditor
