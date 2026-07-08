@@ -23,8 +23,7 @@
     "@nabhaverse/ui": "workspace:*",
     "@nabhaverse/studio-sdk": "workspace:*",
     "@nabhaverse/logger": "workspace:*",
-    "@nabhaverse/env": "workspace:*",
-    "@nabhaverse/studio-sdk": "workspace:*"
+    "@nabhaverse/env": "workspace:*"
   },
   "devDependencies": {
     "@storybook/addon-a11y": "^8.6.14",
