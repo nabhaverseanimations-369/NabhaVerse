@@ -167,6 +167,13 @@ export const workspaceNavGroups: readonly WorkspaceNavGroup[] = [
         icon: ChartNoAxesCombined,
         description: "Audience and release analytics",
       },
+      {
+        id: "publishing-studio",
+        label: "Publishing Studio",
+        href: "/publishing/studio",
+        icon: Megaphone,
+        description: "Publishing orchestration workspace",
+      },
     ],
   },
   {
