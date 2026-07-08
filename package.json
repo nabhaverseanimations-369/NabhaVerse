@@ -15,7 +15,7 @@
     "typecheck:js": "turbo run typecheck",
     "typecheck:python": "mypy apps",
     "test": "pnpm test:js && pnpm test:python",
-    "test:js": "node --test scripts/tests/foundation.test.mjs",
+    "test:js": "node --test scripts/tests/foundation.test.mjs && pnpm --filter @nabhaverse/web test",
     "test:python": "pytest",
     "format": "prettier --write . && black apps packages scripts",
     "format:check": "prettier --check .",

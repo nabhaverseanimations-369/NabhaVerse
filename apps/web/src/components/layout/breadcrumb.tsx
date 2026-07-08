@@ -58,7 +58,7 @@ export function Breadcrumb({ className, ...props }: BreadcrumbProps): React.JSX.
         {segments.map((segment, index) => {
           const isLast = index === segments.length - 1;
           return (
-            <li key={segment.href} className="flex items-center gap-1.5">
+            <li key={`${segment.href}-${index}`} className="flex items-center gap-1.5">
               <ChevronRight className="h-4 w-4 text-[var(--color-text-muted)]" aria-hidden="true" />
               {isLast ? (
                 <span aria-current="page" className="font-medium text-[var(--color-text-primary)]">

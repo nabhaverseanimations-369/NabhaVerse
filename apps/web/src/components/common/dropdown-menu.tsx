@@ -25,6 +25,7 @@ export function DropdownMenu({
 }: DropdownMenuProps): React.JSX.Element {
   const [open, setOpen] = React.useState(false);
   const rootRef = React.useRef<HTMLDivElement>(null);
+  const triggerRef = React.useRef<HTMLButtonElement | null>(null);
 
   React.useEffect(() => {
     function handleClick(event: MouseEvent): void {
@@ -48,20 +49,46 @@ export function DropdownMenu({
     };
   }, []);
 
+  React.useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const firstMenuItem = rootRef.current?.querySelector<HTMLButtonElement>("[role='menuitem']");
+    firstMenuItem?.focus();
+  }, [open]);
+
+  const triggerElement = React.isValidElement(trigger) ? (
+    React.cloneElement(trigger as React.ReactElement<Record<string, unknown>>, {
+      ref: triggerRef,
+      "aria-haspopup": "menu",
+      "aria-expanded": open,
+      "aria-label": (trigger as React.ReactElement<{ "aria-label"?: string }>).props["aria-label"]
+        ? (trigger as React.ReactElement<{ "aria-label"?: string }>).props["aria-label"]
+        : label,
+      onClick: () => {
+        setOpen((prev) => !prev);
+      },
+    })
+  ) : (
+    <button
+      ref={triggerRef}
+      type="button"
+      aria-haspopup="menu"
+      aria-expanded={open}
+      aria-label={label}
+      className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)]"
+      onClick={() => {
+        setOpen((prev) => !prev);
+      }}
+    >
+      {trigger}
+    </button>
+  );
+
   return (
     <div ref={rootRef} className="relative">
-      <button
-        type="button"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-label={label}
-        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)]"
-        onClick={() => {
-          setOpen((prev) => !prev);
-        }}
-      >
-        {trigger}
-      </button>
+      {triggerElement}
 
       {open ? (
         <div
@@ -78,9 +105,31 @@ export function DropdownMenu({
               type="button"
               role="menuitem"
               className="flex w-full flex-col items-start gap-0.5 rounded-sm px-3 py-2 text-left hover:bg-[var(--color-surface-muted)]"
+              onKeyDown={(event) => {
+                if (event.key === "Tab") {
+                  return;
+                }
+
+                const menuItems = Array.from(
+                  rootRef.current?.querySelectorAll<HTMLButtonElement>("[role='menuitem']") ?? [],
+                );
+                const currentIndex = menuItems.indexOf(event.currentTarget);
+                if (event.key === "ArrowDown") {
+                  event.preventDefault();
+                  const next = menuItems[(currentIndex + 1) % menuItems.length];
+                  next?.focus();
+                }
+                if (event.key === "ArrowUp") {
+                  event.preventDefault();
+                  const previous =
+                    menuItems[(currentIndex - 1 + menuItems.length) % menuItems.length];
+                  previous?.focus();
+                }
+              }}
               onClick={() => {
                 setOpen(false);
                 item.onSelect();
+                triggerRef.current?.focus();
               }}
             >
               <span className="text-sm font-medium text-[var(--color-text-primary)]">
