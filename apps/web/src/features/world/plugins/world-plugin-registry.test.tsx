@@ -1,6 +1,7 @@
 import * as React from "react";
 import { describe, expect, it } from "vitest";
 import { screen } from "@testing-library/react";
+import { isSortedByOrder } from "@nabhaverse/studio-sdk";
 
 import { getWorldPlugin, isWorldPluginId, worldPluginRegistry } from "@/features/world";
 import { mockWorlds } from "@/features/world/data/world-mocks";
@@ -12,11 +13,7 @@ describe("world-plugin-registry", () => {
     expect(worldPluginRegistry).toHaveLength(27);
     expect(worldPluginRegistry[0]?.id).toBe("overview");
     expect(worldPluginRegistry.at(-1)?.id).toBe("activity");
-    expect(
-      worldPluginRegistry.every(
-        (plugin, index, plugins) => index === 0 || plugin.order >= plugins[index - 1]!.order,
-      ),
-    ).toBe(true);
+    expect(isSortedByOrder(worldPluginRegistry)).toBe(true);
   });
 
   it("resolves and validates plugin ids", () => {

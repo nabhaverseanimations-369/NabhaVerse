@@ -20,5 +20,5 @@ export default async function CharacterOverviewPage({
 
   const plugin = getCharacterSheetPlugin("overview");
 
-  return <plugin.component character={character} />;
+  return <plugin.component entity={character} />;
 }

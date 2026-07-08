@@ -1,5 +1,4 @@
 import * as React from "react";
-import type { LucideIcon } from "lucide-react";
 import {
   Asterisk,
   Bot,
@@ -24,45 +23,34 @@ import {
   mockCharacterRelationships,
   mockCharacterVersions,
 } from "@/features/character/data/character-mocks";
+import {
+  createStudioDocumentPlugin,
+  isStudioPluginId,
+  type StudioPluginDefinition,
+} from "@nabhaverse/studio-sdk";
 import type { Character, CharacterDocumentType } from "@/features/character/types/character.types";
 
-export interface CharacterSheetPluginProps {
-  character: Character;
-}
-
-export interface CharacterSheetPlugin {
-  id: CharacterDocumentType;
-  title: string;
-  icon: LucideIcon;
-  category: "overview" | "bible" | "design" | "ai" | "reference" | "collaboration";
-  order: number;
-  route: string;
-  component: React.ComponentType<CharacterSheetPluginProps>;
-  permissions: readonly string[];
-  validation: readonly string[];
-  featureFlags: readonly string[];
-  description: string;
-}
+type CharacterSheetPlugin = StudioPluginDefinition<Character, CharacterDocumentType>;
 
 function createDocumentPlugin(
   metadata: Omit<CharacterSheetPlugin, "component" | "permissions" | "validation" | "featureFlags">,
 ): CharacterSheetPlugin {
-  return {
-    ...metadata,
-    permissions: ["characters:read", "characters:write"],
-    validation: ["markdown-placeholder", "attachments-placeholder", "save-state-placeholder"],
-    featureFlags: ["character-studio"],
-    component: ({ character }: CharacterSheetPluginProps) => (
+  return createStudioDocumentPlugin(
+    metadata,
+    ({ entity: character }: { entity: Character }) => (
       <CharacterDocumentEditor
         title={metadata.title}
         description={metadata.description}
         version={character.version}
       />
     ),
-  };
+    ["characters:read", "characters:write"],
+    ["markdown-placeholder", "attachments-placeholder", "save-state-placeholder"],
+    ["character-studio"],
+  );
 }
 
-function OverviewPlugin({ character }: CharacterSheetPluginProps): React.JSX.Element {
+function OverviewPlugin({ entity: character }: { entity: Character }): React.JSX.Element {
   const versions = mockCharacterVersions.filter((version) => version.characterId === character.id);
   const relationships = mockCharacterRelationships.filter(
     (relationship) => relationship.characterId === character.id,
@@ -291,7 +279,7 @@ export const characterWorkspaceSections = characterSheetRegistry.map((plugin) =>
 export const characterSectionIds = new Set(characterSheetRegistry.map((plugin) => plugin.id));
 
 export function isCharacterSection(value: string): value is CharacterDocumentType {
-  return characterSectionIds.has(value as CharacterDocumentType);
+  return isStudioPluginId(value, characterSheetRegistry);
 }
 
 export function getCharacterSection(id: CharacterDocumentType) {
