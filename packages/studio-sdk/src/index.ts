@@ -7,6 +7,7 @@ export * from "./contracts/comment";
 export * from "./contracts/document-editor";
 export * from "./contracts/filter";
 export * from "./contracts/navigation";
+export * from "./contracts/reference";
 export * from "./contracts/plugin";
 export * from "./contracts/search";
 export * from "./contracts/version-timeline";

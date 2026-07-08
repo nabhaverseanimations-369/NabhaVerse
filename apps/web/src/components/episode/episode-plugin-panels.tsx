@@ -3,9 +3,6 @@ import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@nabhaverse/ui";
 import { StudioCommentPanel, StudioDocumentEditor } from "@nabhaverse/studio-sdk";
 
-import { mockCharacters } from "@/features/character/data/character-mocks";
-import { mockWorlds } from "@/features/world/data/world-mocks";
-import { mockEpisodeReferences } from "@/features/episode/data/episode-mocks";
 import type { Episode } from "@/features/episode/types/episode.types";
 
 function ReferenceList({
@@ -49,48 +46,33 @@ function SimpleCard({ title, body }: { title: string; body: string }): React.JSX
 }
 
 export function EpisodeCastPanel({ episode }: { episode: Episode }): React.JSX.Element {
-  const cast = mockCharacters
-    .filter((character) => episode.characterIds.includes(character.id))
-    .map((character) => ({ id: character.id, name: character.name, subtitle: character.summary }));
+  const cast = episode.characters.map((character) => ({
+    id: character.id,
+    name: character.name,
+    subtitle: character.description,
+  }));
 
-  return (
-    <ReferenceList
-      title="Character Cast"
-      items={
-        cast.length > 0
-          ? cast
-          : mockEpisodeReferences.map((item) => ({
-              id: item.id,
-              name: item.title,
-              subtitle: item.subtitle,
-            }))
-      }
-    />
-  );
+  return <ReferenceList title="Character Cast" items={cast} />;
 }
 
 export function EpisodeLocationsPanel({ episode }: { episode: Episode }): React.JSX.Element {
-  const locations = mockWorlds
-    .filter((world) => episode.worldIds.includes(world.id))
-    .map((world) => ({ id: world.id, name: world.name, subtitle: world.description }));
-
-  const fallback = episode.locationNames.map((location) => ({
-    id: location,
-    name: location,
-    subtitle: "Referenced location from episode planning",
+  const locations = episode.locations.map((location) => ({
+    id: location.id,
+    name: location.name,
+    subtitle: location.description,
   }));
 
-  return <ReferenceList title="Locations" items={locations.length > 0 ? locations : fallback} />;
+  return <ReferenceList title="Locations" items={locations} />;
 }
 
 export function EpisodePropsPanel({ episode }: { episode: Episode }): React.JSX.Element {
   return (
     <ReferenceList
       title="Props"
-      items={episode.propNames.map((prop) => ({
-        id: prop,
-        name: prop,
-        subtitle: "Continuity reference",
+      items={episode.props.map((prop) => ({
+        id: prop.id,
+        name: prop.name,
+        subtitle: prop.description,
       }))}
     />
   );
@@ -100,10 +82,10 @@ export function EpisodeAssetsPanel({ episode }: { episode: Episode }): React.JSX
   return (
     <ReferenceList
       title="Assets"
-      items={episode.assetNames.map((asset) => ({
-        id: asset,
-        name: asset,
-        subtitle: "Storyboard or production asset",
+      items={episode.assets.map((asset) => ({
+        id: asset.id,
+        name: asset.name,
+        subtitle: asset.description,
       }))}
     />
   );

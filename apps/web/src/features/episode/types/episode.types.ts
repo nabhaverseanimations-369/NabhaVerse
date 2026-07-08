@@ -1,3 +1,10 @@
+import type {
+  AssetReference,
+  CharacterReference,
+  LocationReference,
+  WorldReference,
+} from "@nabhaverse/studio-sdk";
+
 export type EpisodeStatus = "draft" | "in-review" | "approved" | "archived";
 
 export type EpisodeLibraryView = "grid" | "list";
@@ -52,13 +59,6 @@ export interface EpisodeShot {
   thumbnailLabel: string;
 }
 
-export interface EpisodeReferenceItem {
-  id: string;
-  title: string;
-  subtitle: string;
-  href: string;
-}
-
 export interface Episode {
   id: string;
   slug: string;
@@ -76,11 +76,11 @@ export interface Episode {
   estimatedDuration: string;
   summary: string;
   recentActivity: readonly string[];
-  characterIds: readonly string[];
-  worldIds: readonly string[];
-  locationNames: readonly string[];
-  propNames: readonly string[];
-  assetNames: readonly string[];
+  characters: readonly CharacterReference[];
+  worlds: readonly WorldReference[];
+  locations: readonly LocationReference[];
+  props: readonly AssetReference[];
+  assets: readonly AssetReference[];
   notes: string;
   scenes: readonly EpisodeScene[];
   shots: readonly EpisodeShot[];
