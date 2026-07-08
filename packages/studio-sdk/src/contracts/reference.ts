@@ -23,3 +23,11 @@ export interface AssetReference {
   description: string;
   kind?: string;
 }
+
+export interface EpisodeReference {
+  id: string;
+  name: string;
+  description: string;
+  season?: number;
+  episodeNumber?: number;
+}
