@@ -11,8 +11,8 @@ export type ThemeToggleProps = React.ComponentPropsWithoutRef<"button">;
 
 /** Icon button that flips between the light and dark theme. */
 export function ThemeToggle({ className, ...props }: ThemeToggleProps): React.JSX.Element {
-  const { theme, toggleTheme } = useTheme();
-  const isDark = theme === "dark";
+  const { resolvedTheme, toggleTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   return (
     <Button

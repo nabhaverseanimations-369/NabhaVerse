@@ -103,7 +103,33 @@ pnpm build
 
 # Python tests directly
 pytest
+
+# Frontend unit + accessibility tests (Vitest)
+pnpm --filter @nabhaverse/web test
+
+# Frontend test watch mode
+pnpm --filter @nabhaverse/web test:watch
+
+# Storybook for reusable UI components
+pnpm --filter @nabhaverse/web storybook
+
+# Storybook static verification build
+pnpm --filter @nabhaverse/web storybook:build
 ```
+
+### Writing Frontend Component Tests
+
+- Place tests adjacent to components using `*.test.tsx` (example: `src/components/layout/sidebar.test.tsx`).
+- Use `renderWithProviders` from `apps/web/src/test/test-utils.tsx` for components that depend on theme, workspace state, or toast context.
+- Use `vitest-axe` for accessibility checks (`expect(results).toHaveNoViolations()`).
+- Use keyboard-first assertions for interactive controls (`user.tab()`, `user.keyboard("{Enter}")`) to validate focus and navigation behavior.
+
+### Storybook Usage Guidelines
+
+- Add a `*.stories.tsx` file for every reusable shared component.
+- Include at least one default story and representative state variants (loading, empty, trend/status variations).
+- Keep stories deterministic: avoid network requests and use static fixture props.
+- Run `storybook:build` before PR updates to ensure all stories compile.
 
 ## Common Troubleshooting
 
