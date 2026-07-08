@@ -11,6 +11,7 @@ import {
   GalleryVerticalEnd,
   Gauge,
   Globe,
+  MessageSquareMore,
   Mic,
   MapPinned,
   Megaphone,
@@ -173,6 +174,19 @@ export const workspaceNavGroups: readonly WorkspaceNavGroup[] = [
         href: "/publishing/studio",
         icon: Megaphone,
         description: "Publishing orchestration workspace",
+      },
+    ],
+  },
+  {
+    id: "collaboration",
+    label: "Collaboration",
+    items: [
+      {
+        id: "collaboration-studio",
+        label: "Collaboration Studio",
+        href: "/collaboration/studio",
+        icon: MessageSquareMore,
+        description: "Shared comments, reviews, assignments, and activity workspace",
       },
     ],
   },

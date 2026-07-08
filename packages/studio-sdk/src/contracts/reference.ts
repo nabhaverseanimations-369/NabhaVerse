@@ -94,3 +94,40 @@ export interface DistributionTargetReference {
   provider: "internal" | "youtube" | "social" | "partner" | "custom";
   status: "ready" | "pending" | "error";
 }
+
+export interface CommentReference {
+  id: string;
+  author: string;
+  createdAt: string;
+  status: "open" | "resolved" | "archived";
+}
+
+export interface MentionReference {
+  id: string;
+  subject: string;
+  createdAt: string;
+  status: "unread" | "read" | "archived";
+}
+
+export interface AssignmentReference {
+  id: string;
+  title: string;
+  assignee: string;
+  dueAt?: string;
+  status: "todo" | "in-progress" | "in-review" | "completed" | "blocked";
+}
+
+export interface NotificationReference {
+  id: string;
+  title: string;
+  createdAt: string;
+  type: "mention" | "assignment" | "review-request" | "approval" | "comment" | "system";
+  read: boolean;
+}
+
+export interface DiscussionReference {
+  id: string;
+  title: string;
+  createdAt: string;
+  status: "active" | "paused" | "closed";
+}
