@@ -3,8 +3,8 @@ import Link from "next/link";
 import { cn } from "@nabhaverse/ui";
 
 import {
-  characterWorkspaceSections,
-  type CharacterWorkspaceSection,
+  characterSheetRegistry,
+  type CharacterSheetPlugin,
 } from "@/features/character/constants/character-sections";
 import type { CharacterDocumentType } from "@/features/character/types/character.types";
 
@@ -15,12 +15,12 @@ interface DocumentNavigationProps {
 }
 
 function Item({
-  section,
+  plugin,
   href,
   active,
   collapsed,
 }: {
-  section: CharacterWorkspaceSection;
+  plugin: CharacterSheetPlugin;
   href: string;
   active: boolean;
   collapsed: boolean;
@@ -35,16 +35,16 @@ function Item({
           ? "bg-[var(--color-surface-muted)] font-medium text-[var(--color-text-primary)]"
           : "text-[var(--color-text-secondary)]",
       )}
-      title={collapsed ? section.label : undefined}
+      title={collapsed ? plugin.title : undefined}
     >
       {collapsed ? (
         <span aria-hidden="true" className="font-mono text-xs uppercase tracking-wide">
-          {section.label.slice(0, 2)}
+          {plugin.title.slice(0, 2)}
         </span>
       ) : (
-        section.label
+        plugin.title
       )}
-      {collapsed ? <span className="sr-only">{section.label}</span> : null}
+      {collapsed ? <span className="sr-only">{plugin.title}</span> : null}
     </Link>
   );
 }
@@ -56,12 +56,12 @@ export function DocumentNavigation({
 }: DocumentNavigationProps): React.JSX.Element {
   return (
     <nav aria-label="Character sections" className="flex flex-col gap-1">
-      {characterWorkspaceSections.map((section) => (
+      {characterSheetRegistry.map((plugin) => (
         <Item
-          key={section.id}
-          section={section}
-          href={`/creative/characters/${characterId}/${section.id}`}
-          active={section.id === activeSection}
+          key={plugin.id}
+          plugin={plugin}
+          href={`/creative/characters/${characterId}/${plugin.id}`}
+          active={plugin.id === activeSection}
           collapsed={collapsed}
         />
       ))}

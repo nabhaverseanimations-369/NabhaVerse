@@ -1,9 +1,8 @@
 import * as React from "react";
 import { notFound } from "next/navigation";
 
-import { CharacterDocumentEditor } from "@/components/character";
 import {
-  characterWorkspaceSections,
+  getCharacterSheetPlugin,
   isCharacterSection,
 } from "@/features/character/constants/character-sections";
 import { mockCharacters } from "@/features/character/data/character-mocks";
@@ -22,16 +21,7 @@ export default async function CharacterSectionPage({
     notFound();
   }
 
-  const sectionMeta = characterWorkspaceSections.find((entry) => entry.id === section);
-  if (!sectionMeta) {
-    notFound();
-  }
+  const plugin = getCharacterSheetPlugin(section);
 
-  return (
-    <CharacterDocumentEditor
-      title={sectionMeta.label}
-      description={sectionMeta.description}
-      version={character.version}
-    />
-  );
+  return <plugin.component character={character} />;
 }
