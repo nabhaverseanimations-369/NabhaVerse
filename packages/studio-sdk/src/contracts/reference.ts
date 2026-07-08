@@ -1,59 +1,96 @@
-interface BaseReference {
+export interface CharacterReference {
   id: string;
-}
-
-interface NamedReference extends BaseReference {
   name: string;
-}
-
-interface DescribedReference extends NamedReference {
   description: string;
 }
 
-export type CharacterReference = DescribedReference;
+export interface WorldReference {
+  id: string;
+  name: string;
+  description: string;
+}
 
-export type WorldReference = DescribedReference;
-
-export interface LocationReference extends DescribedReference {
+export interface LocationReference {
+  id: string;
+  name: string;
+  description: string;
   worldId?: string;
 }
 
-export interface AssetReference extends DescribedReference {
+export interface AssetReference {
+  id: string;
+  name: string;
+  description: string;
   kind?: string;
 }
 
-export interface EpisodeReference extends DescribedReference {
+export interface EpisodeReference {
+  id: string;
+  name: string;
+  description: string;
   season?: number;
   episodeNumber?: number;
 }
 
-export interface AIJobReference extends NamedReference {
+export interface AIJobReference {
+  id: string;
+  name: string;
   status: "pending" | "running" | "completed" | "failed" | "cancelled";
 }
 
-export interface PromptReference extends DescribedReference {
+export interface PromptReference {
+  id: string;
+  name: string;
+  description: string;
   version: string;
 }
 
-export interface ModelReference extends DescribedReference {
+export interface ModelReference {
+  id: string;
+  name: string;
   provider: string;
+  description: string;
 }
 
-export interface ProductionTaskReference extends BaseReference {
+export interface ProductionTaskReference {
+  id: string;
   title: string;
   status: "todo" | "in-progress" | "in-review" | "blocked" | "done";
   priority: "low" | "medium" | "high" | "critical";
 }
 
-export interface ReviewReference extends BaseReference {
+export interface ReviewReference {
+  id: string;
   title: string;
   status: "pending" | "approved" | "changes-requested";
   dueAt?: string;
 }
 
-export interface MilestoneReference extends BaseReference {
+export interface MilestoneReference {
+  id: string;
   title: string;
   targetDate: string;
   completion: number;
   status: "planned" | "at-risk" | "on-track" | "completed";
+}
+
+export interface PublicationReference {
+  id: string;
+  name: string;
+  status: "draft" | "scheduled" | "approved" | "published" | "failed";
+  releaseType: "episode" | "trailer" | "short" | "bundle";
+}
+
+export interface ReleaseReference {
+  id: string;
+  name: string;
+  scheduledAt?: string;
+  status: "draft" | "scheduled" | "approved" | "published" | "failed";
+}
+
+export interface DistributionTargetReference {
+  id: string;
+  name: string;
+  provider: "internal" | "youtube" | "social" | "partner" | "custom";
+  status: "ready" | "pending" | "error";
 }
