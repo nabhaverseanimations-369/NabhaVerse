@@ -1,6 +1,10 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "dist"
+    "rootDir": "src",
+    "outDir": "dist",
+    "paths": {
+      "@nabhaverse/ui": ["../ui/dist/index.d.ts"]
+    }
   }
 }
