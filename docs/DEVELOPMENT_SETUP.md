@@ -128,6 +128,7 @@ pnpm --filter @nabhaverse/web storybook:build
 
 - Add a `*.stories.tsx` file for every reusable shared component.
 - Include at least one default story and representative state variants (loading, empty, trend/status variations).
+- World Studio components follow the same rule set as Character Studio components: registry-driven navigation, deterministic mock data, and no network dependencies in stories.
 - Keep stories deterministic: avoid network requests and use static fixture props.
 - Run `storybook:build` before PR updates to ensure all stories compile.
 

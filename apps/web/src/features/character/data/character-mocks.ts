@@ -1,0 +1,242 @@
+import type {
+  Character,
+  CharacterAsset,
+  CharacterDocument,
+  CharacterDocumentType,
+  CharacterProfile,
+  CharacterRelationship,
+  CharacterVersion,
+} from "@/features/character/types/character.types";
+
+export const mockCharacters: Character[] = [
+  {
+    id: "chr_aurora",
+    slug: "aurora-vale",
+    name: "Aurora Vale",
+    status: "approved",
+    owner: "Aarya Patel",
+    studio: "NabhaVerse Prime",
+    tags: ["lead", "pilot", "heroic"],
+    favorite: true,
+    recentlyOpenedAt: "3m ago",
+    updatedAt: "12m ago",
+    version: "v2.8",
+    summary: "Sky-fleet captain balancing tactical precision with empathetic leadership.",
+  },
+  {
+    id: "chr_nox7",
+    slug: "nox-7",
+    name: "Nox-7",
+    status: "in-review",
+    owner: "Ravi Khanna",
+    studio: "NabhaVerse Prime",
+    tags: ["android", "support", "analytical"],
+    favorite: false,
+    recentlyOpenedAt: "28m ago",
+    updatedAt: "47m ago",
+    version: "v1.9",
+    summary: "Adaptive android tactician with dry humor and strict internal ethics model.",
+  },
+  {
+    id: "chr_serin",
+    slug: "serin-ash",
+    name: "Serin Ash",
+    status: "draft",
+    owner: "Leena Roy",
+    studio: "NabhaVerse Prime",
+    tags: ["antagonist", "mystic", "stealth"],
+    favorite: true,
+    recentlyOpenedAt: "1h ago",
+    updatedAt: "2h ago",
+    version: "v0.7",
+    summary: "A shadow operative whose motives are hidden beneath ritual discipline.",
+  },
+  {
+    id: "chr_toma",
+    slug: "toma-quill",
+    name: "Toma Quill",
+    status: "archived",
+    owner: "Aarya Patel",
+    studio: "NabhaVerse Prime",
+    tags: ["comic-relief", "mechanic"],
+    favorite: false,
+    updatedAt: "3d ago",
+    version: "v3.1",
+    summary: "Legacy mechanic concept retained for continuity references.",
+  },
+  {
+    id: "chr_lyra",
+    slug: "lyra-stone",
+    name: "Lyra Stone",
+    status: "approved",
+    owner: "Mina Das",
+    studio: "NabhaVerse Prime",
+    tags: ["mentor", "strategist"],
+    favorite: false,
+    recentlyOpenedAt: "2h ago",
+    updatedAt: "5h ago",
+    version: "v1.4",
+    summary: "Veteran tactician anchoring the crew through crisis-driven arcs.",
+  },
+  {
+    id: "chr_zeno",
+    slug: "zeno-rhyl",
+    name: "Zeno Rhyl",
+    status: "in-review",
+    owner: "Ravi Khanna",
+    studio: "NabhaVerse Prime",
+    tags: ["rival", "ace-pilot"],
+    favorite: false,
+    updatedAt: "8h ago",
+    version: "v0.9",
+    summary: "Hotshot rival pilot whose competitiveness masks deeper loyalty.",
+  },
+];
+
+export const mockCharacterProfiles: CharacterProfile[] = [
+  {
+    characterId: "chr_aurora",
+    archetype: "Reluctant Commander",
+    ageRange: "Late 20s",
+    roleInStory: "Primary protagonist",
+    motivation: "Protect her crew while uncovering the truth behind the Rift collapse.",
+    signatureTraits: ["Decisive", "Empathetic", "Obsessively prepared"],
+  },
+  {
+    characterId: "chr_nox7",
+    archetype: "Logical Protector",
+    ageRange: "Ageless synthetic",
+    roleInStory: "Strategic support lead",
+    motivation: "Optimize team survival probabilities without losing human trust.",
+    signatureTraits: ["Precise", "Observant", "Unexpectedly warm"],
+  },
+];
+
+export const mockCharacterVersions: CharacterVersion[] = [
+  {
+    id: "ver_aurora_28",
+    characterId: "chr_aurora",
+    label: "v2.8",
+    createdAt: "Today, 09:12",
+    author: "Aarya Patel",
+    summary: "Updated expression set and voice cadence notes.",
+    active: true,
+  },
+  {
+    id: "ver_aurora_27",
+    characterId: "chr_aurora",
+    label: "v2.7",
+    createdAt: "Yesterday, 18:44",
+    author: "Mina Das",
+    summary: "Aligned model proportions for episodic consistency.",
+    active: false,
+  },
+  {
+    id: "ver_aurora_26",
+    characterId: "chr_aurora",
+    label: "v2.6",
+    createdAt: "2 days ago",
+    author: "Ravi Khanna",
+    summary: "Reworked material spec references for fabric shaders.",
+    active: false,
+  },
+];
+
+export const mockCharacterAssets: CharacterAsset[] = [
+  {
+    id: "ast_aurora_model",
+    characterId: "chr_aurora",
+    title: "Aurora Model Turnaround",
+    kind: "image",
+    previewUrl: "https://picsum.photos/seed/aurora-model/640/420",
+    updatedAt: "14m ago",
+  },
+  {
+    id: "ast_aurora_face",
+    characterId: "chr_aurora",
+    title: "Facial Expression Grid",
+    kind: "image",
+    previewUrl: "https://picsum.photos/seed/aurora-face/640/420",
+    updatedAt: "1h ago",
+  },
+  {
+    id: "ast_aurora_ref",
+    characterId: "chr_aurora",
+    title: "Material Reference Deck",
+    kind: "document",
+    previewUrl: "https://picsum.photos/seed/aurora-doc/640/420",
+    updatedAt: "3h ago",
+  },
+];
+
+export const mockCharacterRelationships: CharacterRelationship[] = [
+  {
+    id: "rel_aurora_nox",
+    characterId: "chr_aurora",
+    relatedCharacterId: "chr_nox7",
+    relatedName: "Nox-7",
+    relationshipType: "team",
+    notes: "Command and tactical support dynamic with mutual trust growth.",
+  },
+  {
+    id: "rel_aurora_zeno",
+    characterId: "chr_aurora",
+    relatedCharacterId: "chr_zeno",
+    relatedName: "Zeno Rhyl",
+    relationshipType: "rival",
+    notes: "Competitive conflict masking shared values and eventual alliance.",
+  },
+  {
+    id: "rel_aurora_lyra",
+    characterId: "chr_aurora",
+    relatedCharacterId: "chr_lyra",
+    relatedName: "Lyra Stone",
+    relationshipType: "mentor",
+    notes: "Mentorship rooted in high accountability and strategic growth.",
+  },
+];
+
+const baseDocumentSeed: Record<CharacterDocumentType, string> = {
+  overview: "Character command-center notes and latest review highlights.",
+  "character-bible": "Canonical biography, motivations, and continuity constraints.",
+  "design-specifications":
+    "Shape language, silhouette hierarchy, and costume construction details.",
+  "ai-specifications": "Prompt framing, negative prompts, and generation consistency constraints.",
+  "model-sheet": "Front, side, and back model standards with proportion locks.",
+  "expression-sheet": "Core expression set with emotional intensities and edge-case variants.",
+  "pose-sheet": "Signature pose library, grounding cues, and scene readability notes.",
+  "outfit-sheet": "Primary and alternate outfits with context usage and continuity tags.",
+  "lighting-sheet": "Key/fill/rim behavior across daylight, dusk, and stylized night scenes.",
+  "material-sheet": "Material swatches, roughness ranges, and reflectance guidance.",
+  "environment-sheet": "Interaction rules between character and recurring environment motifs.",
+  "animation-sheet": "Movement cadence, anticipation timing, and gesture restrictions.",
+  "voice-sheet": "Voice timbre, pacing, and emotional modulation guidelines.",
+  "sound-sheet": "Foley motifs and signature sonic fingerprints.",
+  "ai-consistency-sheet": "Cross-angle, costume, and proportion consistency checklist.",
+  relationships: "Primary relationships map with conflict, trust, and narrative dependency notes.",
+  assets: "Linked reference assets, model sheets, and external decks.",
+  documents: "Supplemental docs from writing, design, and production alignment sessions.",
+  "version-history": "Version milestones summarizing key revisions and rationale.",
+  comments: "Threaded feedback from creative review rounds.",
+  activity: "Chronological activity logs and change audit highlights.",
+};
+
+export function mockDocumentForSection(
+  characterId: string,
+  section: CharacterDocumentType,
+): CharacterDocument {
+  return {
+    id: `doc_${characterId}_${section}`,
+    characterId,
+    type: section,
+    title: section
+      .split("-")
+      .map((token) => `${token.slice(0, 1).toUpperCase()}${token.slice(1)}`)
+      .join(" "),
+    markdown: `${baseDocumentSeed[section]}\n\n- Placeholder rich text block\n- Placeholder markdown block\n- Placeholder image attachment panel`,
+    hasUnsavedChanges: false,
+    saveStatus: "saved",
+    versionLabel: "v2.8",
+    updatedAt: "12m ago",
+  };
+}
