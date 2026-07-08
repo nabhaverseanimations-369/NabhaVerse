@@ -17,6 +17,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
+      "@nabhaverse/ui": path.resolve(__dirname, "../../packages/ui/src/index.ts"),
     },
   },
 });
