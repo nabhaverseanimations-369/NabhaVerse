@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Bot,
+  BrainCircuit,
   Building2,
   ChartNoAxesCombined,
   Clapperboard,
@@ -187,6 +188,19 @@ export const workspaceNavGroups: readonly WorkspaceNavGroup[] = [
         href: "/collaboration/studio",
         icon: MessageSquareMore,
         description: "Shared comments, reviews, assignments, and activity workspace",
+      },
+    ],
+  },
+  {
+    id: "intelligence",
+    label: "Intelligence",
+    items: [
+      {
+        id: "studio-intelligence",
+        label: "Studio Intelligence",
+        href: "/intelligence/studio",
+        icon: BrainCircuit,
+        description: "Cross-studio intelligence, search, commands, and insights",
       },
     ],
   },

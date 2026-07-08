@@ -131,3 +131,46 @@ export interface DiscussionReference {
   createdAt: string;
   status: "active" | "paused" | "closed";
 }
+
+export interface SearchResultReference {
+  id: string;
+  title: string;
+  category:
+    | "navigation"
+    | "character"
+    | "world"
+    | "episode"
+    | "asset"
+    | "ai"
+    | "production"
+    | "publishing"
+    | "collaboration"
+    | "intelligence"
+    | "documentation"
+    | "command";
+  description: string;
+  href?: string;
+}
+
+export interface CommandReference {
+  id: string;
+  title: string;
+  category: "navigation" | "workspace" | "editing" | "review" | "system" | "developer";
+  description: string;
+}
+
+export interface InsightReference {
+  id: string;
+  title: string;
+  summary: string;
+  severity: "info" | "watch" | "critical";
+  studio: string;
+}
+
+export interface RecommendationReference {
+  id: string;
+  title: string;
+  summary: string;
+  reason: string;
+  priority: "low" | "medium" | "high";
+}

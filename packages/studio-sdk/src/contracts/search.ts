@@ -18,6 +18,9 @@ export type StudioSearchCategory =
   | "asset"
   | "ai"
   | "production"
+  | "publishing"
+  | "collaboration"
+  | "intelligence"
   | "documentation"
   | "command";
 
