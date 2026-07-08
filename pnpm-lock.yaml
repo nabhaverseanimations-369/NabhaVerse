@@ -53,6 +53,9 @@ importers:
       '@nabhaverse/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@nabhaverse/studio-sdk':
+        specifier: workspace:*
+        version: link:../../packages/studio-sdk
       '@nabhaverse/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -151,6 +154,8 @@ importers:
   packages/logger: {}
 
   packages/prompts: {}
+
+  packages/studio-sdk: {}
 
   packages/types: {}
 
