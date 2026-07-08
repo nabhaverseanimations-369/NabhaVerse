@@ -1,1 +1,1 @@
-export * from "./studio-document-editor";
+export * from "@nabhaverse/studio-sdk";

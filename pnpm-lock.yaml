@@ -53,6 +53,9 @@ importers:
       '@nabhaverse/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@nabhaverse/studio-sdk':
+        specifier: workspace:*
+        version: link:../../packages/studio-sdk
       '@nabhaverse/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -151,6 +154,31 @@ importers:
   packages/logger: {}
 
   packages/prompts: {}
+
+  packages/studio-sdk:
+    dependencies:
+      '@nabhaverse/ui':
+        specifier: workspace:*
+        version: link:../ui
+      lucide-react:
+        specifier: ^0.525.0
+        version: 0.525.0(react@19.2.7)
+      next:
+        specifier: 16.2.10
+        version: 16.2.10(@babel/core@7.29.7)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.7(react@19.2.7)
+    devDependencies:
+      '@types/react':
+        specifier: ^19.2.17
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.17)
 
   packages/types: {}
 

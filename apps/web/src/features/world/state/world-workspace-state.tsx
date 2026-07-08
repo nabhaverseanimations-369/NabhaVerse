@@ -1,13 +1,17 @@
 "use client";
 
 import * as React from "react";
+import {
+  createDraftState,
+  markDraftSaved,
+  setDraftSaveStatus,
+  updateDraftMarkdown,
+  type StudioDraftState,
+} from "@nabhaverse/studio-sdk";
 
 import type { World, WorldPluginId } from "@/features/world/types/world.types";
 
-export interface WorldDraftState {
-  markdown: string;
-  saveStatus: "idle" | "saving" | "saved";
-}
+export type WorldDraftState = StudioDraftState;
 
 export interface WorldWorkspaceState {
   currentWorld: World | null;
@@ -34,7 +38,7 @@ type WorldWorkspaceAction =
 const initialState: WorldWorkspaceState = {
   currentWorld: null,
   selectedPlugin: "overview",
-  draftState: { markdown: "", saveStatus: "idle" },
+  draftState: createDraftState(),
   unsavedChanges: false,
   currentVersion: "v1.0",
   workspaceSettings: {
@@ -56,15 +60,15 @@ function reducer(state: WorldWorkspaceState, action: WorldWorkspaceAction): Worl
     case "update-draft":
       return {
         ...state,
-        draftState: { ...state.draftState, markdown: action.markdown, saveStatus: "idle" },
+        draftState: updateDraftMarkdown(state.draftState, action.markdown),
         unsavedChanges: true,
       };
     case "set-save-status":
-      return { ...state, draftState: { ...state.draftState, saveStatus: action.status } };
+      return { ...state, draftState: setDraftSaveStatus(state.draftState, action.status) };
     case "mark-saved":
       return {
         ...state,
-        draftState: { ...state.draftState, saveStatus: "saved" },
+        draftState: markDraftSaved(state.draftState),
         unsavedChanges: false,
       };
     case "set-version":
@@ -107,10 +111,7 @@ export function WorldWorkspaceProvider({
     currentWorld: initialWorld,
     selectedPlugin: initialPlugin,
     currentVersion: initialWorld.version,
-    draftState: {
-      markdown: initialMarkdown,
-      saveStatus: "saved",
-    },
+    draftState: createDraftState(initialMarkdown, "saved"),
   });
 
   const value = React.useMemo(() => ({ state, dispatch }), [state]);

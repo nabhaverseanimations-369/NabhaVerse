@@ -21,6 +21,7 @@
     "framer-motion": "^12.23.4",
     "lucide-react": "^0.525.0",
     "@nabhaverse/ui": "workspace:*",
+    "@nabhaverse/studio-sdk": "workspace:*",
     "@nabhaverse/logger": "workspace:*",
     "@nabhaverse/env": "workspace:*"
   },
