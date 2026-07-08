@@ -1,14 +1,18 @@
 "use client";
 
 import * as React from "react";
+import {
+  createDraftState,
+  markDraftSaved,
+  setDraftSaveStatus,
+  updateDraftMarkdown,
+  type StudioDraftState,
+} from "@nabhaverse/studio-sdk";
 
 import { getCharacterSection } from "@/features/character/constants/character-sections";
 import type { Character, CharacterDocumentType } from "@/features/character/types/character.types";
 
-export interface CharacterDraftState {
-  markdown: string;
-  saveStatus: "idle" | "saving" | "saved";
-}
+export type CharacterDraftState = StudioDraftState;
 
 export interface CharacterWorkspaceState {
   currentCharacter: Character | null;
@@ -31,7 +35,7 @@ type CharacterWorkspaceAction =
 const initialState: CharacterWorkspaceState = {
   currentCharacter: null,
   selectedSheet: "overview",
-  draftState: { markdown: "", saveStatus: "idle" },
+  draftState: createDraftState(),
   unsavedChanges: false,
   currentVersion: "v1.0",
   sidebarCollapsed: false,
@@ -58,18 +62,18 @@ function reducer(
     case "update-draft":
       return {
         ...state,
-        draftState: { ...state.draftState, markdown: action.markdown, saveStatus: "idle" },
+        draftState: updateDraftMarkdown(state.draftState, action.markdown),
         unsavedChanges: true,
       };
     case "set-save-status":
       return {
         ...state,
-        draftState: { ...state.draftState, saveStatus: action.status },
+        draftState: setDraftSaveStatus(state.draftState, action.status),
       };
     case "mark-saved":
       return {
         ...state,
-        draftState: { ...state.draftState, saveStatus: "saved" },
+        draftState: markDraftSaved(state.draftState),
         unsavedChanges: false,
       };
     case "set-version":
@@ -110,10 +114,7 @@ export function CharacterWorkspaceProvider({
     currentCharacter: initialCharacter,
     selectedSheet: initialSheet,
     currentVersion: initialCharacter.version,
-    draftState: {
-      markdown: initialMarkdown,
-      saveStatus: "saved",
-    },
+    draftState: createDraftState(initialMarkdown, "saved"),
   });
 
   const value = React.useMemo(() => ({ state, dispatch }), [state]);

@@ -23,5 +23,5 @@ export default async function CharacterSectionPage({
 
   const plugin = getCharacterSheetPlugin(section);
 
-  return <plugin.component character={character} />;
+  return <plugin.component entity={character} />;
 }

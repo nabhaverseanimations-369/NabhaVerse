@@ -10,6 +10,7 @@
     "noEmit": true,
     "paths": {
       "@/*": ["./src/*"],
+      "@nabhaverse/studio-sdk": ["../../packages/studio-sdk/src/index.ts"],
       "@nabhaverse/ui": ["../../packages/ui/src/index.ts"],
       "@nabhaverse/env": ["../../packages/env/src/index.ts"],
       "@nabhaverse/logger": ["../../packages/logger/src/index.ts"]

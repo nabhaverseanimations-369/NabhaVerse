@@ -34,10 +34,10 @@ import {
 } from "@/features/world/data/world-mocks";
 import {
   createStudioDocumentPlugin,
+  isStudioPluginId,
   type StudioPluginDefinition,
-} from "@/features/studio/plugins/studio-plugin-registry";
+} from "@nabhaverse/studio-sdk";
 import type { World, WorldPluginId } from "@/features/world/types/world.types";
-import { isStudioPluginId } from "@/features/studio/plugins/studio-plugin-registry";
 
 function buildDocumentPlugin(
   metadata: Omit<

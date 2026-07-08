@@ -3,8 +3,11 @@ import type {
   CharacterLibraryFilters,
   CharacterStatus,
 } from "@/features/character/types/character.types";
-
-const collator = new Intl.Collator("en", { sensitivity: "base" });
+import {
+  includesQueryFromFields,
+  paginateItems,
+  sortByCommonSortKey,
+} from "@nabhaverse/studio-sdk";
 
 function statusOrder(status: CharacterStatus): number {
   switch (status) {
@@ -22,15 +25,10 @@ function statusOrder(status: CharacterStatus): number {
 }
 
 function includesQuery(character: Character, query: string): boolean {
-  const normalized = query.trim().toLowerCase();
-  if (!normalized) {
-    return true;
-  }
-
-  return [character.name, character.owner, character.summary, ...character.tags]
-    .join(" ")
-    .toLowerCase()
-    .includes(normalized);
+  return includesQueryFromFields(
+    [character.name, character.owner, character.summary, ...character.tags],
+    query,
+  );
 }
 
 function isRecent(character: Character): boolean {
@@ -67,23 +65,7 @@ export function filterAndSortCharacters(
 
   const sorted = [...filtered];
   sorted.sort((left, right) => {
-    switch (filters.sortBy) {
-      case "name":
-        return collator.compare(left.name, right.name);
-      case "status":
-        return statusOrder(left.status) - statusOrder(right.status);
-      case "recent": {
-        const leftRecent = left.recentlyOpenedAt ? 0 : 1;
-        const rightRecent = right.recentlyOpenedAt ? 0 : 1;
-        if (leftRecent !== rightRecent) {
-          return leftRecent - rightRecent;
-        }
-        return collator.compare(left.name, right.name);
-      }
-      case "updatedAt":
-      default:
-        return collator.compare(left.updatedAt, right.updatedAt);
-    }
+    return sortByCommonSortKey(left, right, filters.sortBy, statusOrder);
   });
 
   return sorted;
@@ -94,11 +76,5 @@ export function paginateCharacters(
   page: number,
   pageSize: number,
 ): { items: Character[]; hasNextPage: boolean } {
-  const safePage = Math.max(page, 1);
-  const safePageSize = Math.max(pageSize, 1);
-  const start = (safePage - 1) * safePageSize;
-  const end = start + safePageSize;
-  const items = characters.slice(start, end);
-  const hasNextPage = end < characters.length;
-  return { items, hasNextPage };
+  return paginateItems(characters, page, pageSize);
 }
