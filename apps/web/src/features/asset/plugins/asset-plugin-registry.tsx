@@ -14,6 +14,7 @@ import {
 
 import {
   createStudioDocumentPlugin,
+  getStudioPluginOrThrow,
   isStudioPluginId,
   type StudioPluginDefinition,
 } from "@nabhaverse/studio-sdk";
@@ -227,9 +228,5 @@ export function isAssetPluginId(value: string): value is AssetPluginId {
 }
 
 export function getAssetPlugin(id: AssetPluginId): StudioPluginDefinition<Asset, AssetPluginId> {
-  const plugin = assetPluginRegistry.find((entry) => entry.id === id);
-  if (!plugin) {
-    throw new Error(`Unknown asset plugin: ${id}`);
-  }
-  return plugin;
+  return getStudioPluginOrThrow(assetPluginRegistry, id, "asset");
 }

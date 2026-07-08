@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 import { Button, Card } from "@nabhaverse/ui";
-import { useStudioSidebarState } from "@nabhaverse/studio-sdk";
+import { resolveStudioRouteSegment, useStudioSidebarState } from "@nabhaverse/studio-sdk";
 
 import { AINavigation } from "@/components/ai/ai-navigation";
 import { isAIPluginId } from "@/features/ai/plugins/ai-plugin-registry";
@@ -13,12 +13,7 @@ import { useAIWorkspaceState } from "@/features/ai/state/ai-workspace-state";
 import type { AIPluginId } from "@/features/ai/plugins/ai-plugin-registry";
 
 function resolveActivePlugin(pathname: string): AIPluginId {
-  const segments = pathname.split("/").filter(Boolean);
-  const maybePlugin = segments[3];
-  if (!maybePlugin || !isAIPluginId(maybePlugin)) {
-    return "overview";
-  }
-  return maybePlugin;
+  return resolveStudioRouteSegment(pathname, 3, isAIPluginId, "overview");
 }
 
 export function AIWorkspaceShell({

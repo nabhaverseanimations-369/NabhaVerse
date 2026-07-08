@@ -4,6 +4,7 @@ export * from "./components/studio-plugin-navigation";
 export * from "./contracts/activity";
 export * from "./contracts/attachment";
 export * from "./contracts/comment";
+export * from "./contracts/command";
 export * from "./contracts/document-editor";
 export * from "./contracts/filter";
 export * from "./contracts/navigation";

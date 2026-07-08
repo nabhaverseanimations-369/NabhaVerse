@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 import { Button, Card } from "@nabhaverse/ui";
-import { useStudioSidebarState } from "@nabhaverse/studio-sdk";
+import { resolveStudioRouteSegment, useStudioSidebarState } from "@nabhaverse/studio-sdk";
 
 import { ProductionNavigation } from "@/components/production/production-navigation";
 import { isProductionPluginId } from "@/features/production/plugins/production-plugin-registry";
@@ -13,12 +13,7 @@ import { useProductionWorkspaceState } from "@/features/production/state/product
 import type { ProductionPluginId } from "@/features/production/plugins/production-plugin-registry";
 
 function resolveActivePlugin(pathname: string): ProductionPluginId {
-  const segments = pathname.split("/").filter(Boolean);
-  const maybePlugin = segments[3];
-  if (!maybePlugin || !isProductionPluginId(maybePlugin)) {
-    return "overview";
-  }
-  return maybePlugin;
+  return resolveStudioRouteSegment(pathname, 3, isProductionPluginId, "overview");
 }
 
 export function ProductionWorkspaceShell({

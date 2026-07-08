@@ -25,6 +25,7 @@ import {
 } from "@/features/character/data/character-mocks";
 import {
   createStudioDocumentPlugin,
+  getStudioPluginOrThrow,
   isStudioPluginId,
   type StudioPluginDefinition,
 } from "@nabhaverse/studio-sdk";
@@ -291,11 +292,7 @@ export function getCharacterSection(id: CharacterDocumentType) {
 }
 
 export function getCharacterSheetPlugin(id: CharacterDocumentType): CharacterSheetPlugin {
-  const plugin = characterSheetRegistry.find((item) => item.id === id);
-  if (!plugin) {
-    throw new Error(`Unknown character sheet plugin: ${id}`);
-  }
-  return plugin;
+  return getStudioPluginOrThrow(characterSheetRegistry, id, "character");
 }
 
 export function getCharacterSheetPlugins(): readonly CharacterSheetPlugin[] {

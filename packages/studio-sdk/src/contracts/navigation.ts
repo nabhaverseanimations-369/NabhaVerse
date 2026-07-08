@@ -10,3 +10,17 @@ export interface StudioNavigationContract<TId extends string = string> {
   collapsed?: boolean;
   label: string;
 }
+
+export function resolveStudioRouteSegment<TId extends string>(
+  pathname: string,
+  segmentIndex: number,
+  isValid: (value: string) => value is TId,
+  fallback: TId,
+): TId {
+  const segments = pathname.split("/").filter(Boolean);
+  const maybeSegment = segments[segmentIndex];
+  if (!maybeSegment || !isValid(maybeSegment)) {
+    return fallback;
+  }
+  return maybeSegment;
+}

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 import { Button, Card } from "@nabhaverse/ui";
-import { useStudioSidebarState } from "@nabhaverse/studio-sdk";
+import { resolveStudioRouteSegment, useStudioSidebarState } from "@nabhaverse/studio-sdk";
 
 import { AssetNavigation } from "@/components/asset/asset-navigation";
 import { isAssetPluginId } from "@/features/asset/plugins/asset-plugin-registry";
@@ -13,12 +13,7 @@ import { useAssetWorkspaceState } from "@/features/asset/state/asset-workspace-s
 import type { AssetPluginId } from "@/features/asset/plugins/asset-plugin-registry";
 
 function resolveActivePlugin(pathname: string): AssetPluginId {
-  const segments = pathname.split("/").filter(Boolean);
-  const maybePlugin = segments[3];
-  if (!maybePlugin || !isAssetPluginId(maybePlugin)) {
-    return "overview";
-  }
-  return maybePlugin;
+  return resolveStudioRouteSegment(pathname, 3, isAssetPluginId, "overview");
 }
 
 export function AssetWorkspaceShell({
