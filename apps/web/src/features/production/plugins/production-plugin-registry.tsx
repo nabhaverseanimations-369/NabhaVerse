@@ -18,6 +18,7 @@ import {
 
 import {
   createStudioDocumentPlugin,
+  getStudioPluginOrThrow,
   isStudioPluginId,
   type StudioPluginDefinition,
 } from "@nabhaverse/studio-sdk";
@@ -254,9 +255,5 @@ export function isProductionPluginId(value: string): value is ProductionPluginId
 export function getProductionPlugin(
   id: ProductionPluginId,
 ): StudioPluginDefinition<Production, ProductionPluginId> {
-  const plugin = productionPluginRegistry.find((entry) => entry.id === id);
-  if (!plugin) {
-    throw new Error(`Unknown production plugin: ${id}`);
-  }
-  return plugin;
+  return getStudioPluginOrThrow(productionPluginRegistry, id, "production");
 }

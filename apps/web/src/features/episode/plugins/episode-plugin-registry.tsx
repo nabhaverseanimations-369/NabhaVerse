@@ -31,6 +31,7 @@ import {
 import type { Episode, EpisodePluginId } from "@/features/episode/types/episode.types";
 import {
   createStudioDocumentPlugin,
+  getStudioPluginOrThrow,
   isStudioPluginId,
   type StudioPluginDefinition,
 } from "@nabhaverse/studio-sdk";
@@ -275,9 +276,5 @@ export function isEpisodePluginId(value: string): value is EpisodePluginId {
 export function getEpisodePlugin(
   id: EpisodePluginId,
 ): StudioPluginDefinition<Episode, EpisodePluginId> {
-  const plugin = episodePluginRegistry.find((entry) => entry.id === id);
-  if (!plugin) {
-    throw new Error(`Unknown episode plugin: ${id}`);
-  }
-  return plugin;
+  return getStudioPluginOrThrow(episodePluginRegistry, id, "episode");
 }

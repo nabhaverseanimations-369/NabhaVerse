@@ -4,6 +4,10 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import {
+  createStudioGlobalSearchService,
+  type StudioCommandDefinition,
+} from "@nabhaverse/studio-sdk";
+import {
   Button,
   Dialog,
   DialogContent,
@@ -12,6 +16,12 @@ import {
   Input,
 } from "@nabhaverse/ui";
 
+import {
+  commandHref,
+  createGlobalCommandRegistry,
+  createNavigationSearchProvider,
+  type GlobalCommandId,
+} from "@/features/studio";
 import { workspaceNavItems } from "../navigation/nav-items";
 
 /**
@@ -23,7 +33,52 @@ import { workspaceNavItems } from "../navigation/nav-items";
 export function CommandPalette(): React.JSX.Element {
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
+  const [matchedCommands, setMatchedCommands] = React.useState<
+    readonly StudioCommandDefinition<GlobalCommandId>[]
+  >([]);
   const router = useRouter();
+
+  const navigationCommands = React.useMemo(
+    () =>
+      workspaceNavItems.map((item) => ({
+        id: item.id,
+        label: item.label,
+        description: item.description,
+        href: item.href,
+      })),
+    [],
+  );
+
+  const commandRegistry = React.useMemo(
+    () => createGlobalCommandRegistry(navigationCommands),
+    [navigationCommands],
+  );
+
+  const searchService = React.useMemo(() => {
+    const service = createStudioGlobalSearchService();
+    service.registerProvider(
+      createNavigationSearchProvider(
+        "workspace-navigation",
+        commandRegistry.commands
+          .map((command) => {
+            const href = commandHref(command);
+            if (!href) {
+              return null;
+            }
+
+            return {
+              id: command.id,
+              title: command.title,
+              description: command.description,
+              href,
+              keywords: command.keywords,
+            };
+          })
+          .filter((entry): entry is NonNullable<typeof entry> => entry !== null),
+      ),
+    );
+    return service;
+  }, [commandRegistry.commands]);
 
   React.useEffect(() => {
     function handleKeyDown(event: KeyboardEvent): void {
@@ -37,9 +92,27 @@ export function CommandPalette(): React.JSX.Element {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const filteredItems = workspaceNavItems.filter((item) =>
-    `${item.label} ${item.description}`.toLowerCase().includes(query.toLowerCase()),
-  );
+  React.useEffect(() => {
+    let cancelled = false;
+
+    void searchService.search({ query, limit: 60 }).then((response) => {
+      if (cancelled) {
+        return;
+      }
+
+      const commands = response.results
+        .map((result) => commandRegistry.findById(result.id as GlobalCommandId))
+        .filter(
+          (command): command is StudioCommandDefinition<GlobalCommandId> => command !== undefined,
+        );
+
+      setMatchedCommands(commands);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [commandRegistry, query, searchService]);
 
   return (
     <>
@@ -81,10 +154,18 @@ export function CommandPalette(): React.JSX.Element {
             role="listbox"
             aria-label="Modules"
           >
-            {filteredItems.map((item) => {
+            {matchedCommands.map((command) => {
+              const href = commandHref(command);
+              const navItemId = command.id.replace("navigate:", "");
+              const item = workspaceNavItems.find((entry) => entry.id === navItemId);
+
+              if (!href || !item) {
+                return null;
+              }
+
               const Icon = item.icon;
               return (
-                <li key={item.href}>
+                <li key={command.id}>
                   <button
                     type="button"
                     role="option"
@@ -93,19 +174,19 @@ export function CommandPalette(): React.JSX.Element {
                     onClick={() => {
                       setOpen(false);
                       setQuery("");
-                      router.push(item.href);
+                      router.push(href);
                     }}
                   >
                     <Icon className="h-4 w-4" aria-hidden="true" />
-                    <span>{item.label}</span>
+                    <span>{command.title}</span>
                     <span className="text-xs text-[var(--color-text-secondary)]">
-                      {item.description}
+                      {command.description}
                     </span>
                   </button>
                 </li>
               );
             })}
-            {filteredItems.length === 0 ? (
+            {matchedCommands.length === 0 ? (
               <li className="px-3 py-2 text-sm text-[var(--color-text-muted)]">
                 No modules found.
               </li>

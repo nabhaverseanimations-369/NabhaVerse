@@ -1,73 +1,57 @@
-export interface CharacterReference {
+interface BaseReference {
   id: string;
+}
+
+interface NamedReference extends BaseReference {
   name: string;
+}
+
+interface DescribedReference extends NamedReference {
   description: string;
 }
 
-export interface WorldReference {
-  id: string;
-  name: string;
-  description: string;
-}
+export type CharacterReference = DescribedReference;
 
-export interface LocationReference {
-  id: string;
-  name: string;
-  description: string;
+export type WorldReference = DescribedReference;
+
+export interface LocationReference extends DescribedReference {
   worldId?: string;
 }
 
-export interface AssetReference {
-  id: string;
-  name: string;
-  description: string;
+export interface AssetReference extends DescribedReference {
   kind?: string;
 }
 
-export interface EpisodeReference {
-  id: string;
-  name: string;
-  description: string;
+export interface EpisodeReference extends DescribedReference {
   season?: number;
   episodeNumber?: number;
 }
 
-export interface AIJobReference {
-  id: string;
-  name: string;
+export interface AIJobReference extends NamedReference {
   status: "pending" | "running" | "completed" | "failed" | "cancelled";
 }
 
-export interface PromptReference {
-  id: string;
-  name: string;
-  description: string;
+export interface PromptReference extends DescribedReference {
   version: string;
 }
 
-export interface ModelReference {
-  id: string;
-  name: string;
+export interface ModelReference extends DescribedReference {
   provider: string;
-  description: string;
 }
 
-export interface ProductionTaskReference {
-  id: string;
+export interface ProductionTaskReference extends BaseReference {
   title: string;
   status: "todo" | "in-progress" | "in-review" | "blocked" | "done";
   priority: "low" | "medium" | "high" | "critical";
 }
 
-export interface ReviewReference {
-  id: string;
+export interface ReviewReference extends BaseReference {
   title: string;
   status: "pending" | "approved" | "changes-requested";
   dueAt?: string;
 }
 
-export interface MilestoneReference {
-  id: string;
+export interface MilestoneReference extends BaseReference {
   title: string;
   targetDate: string;
   completion: number;

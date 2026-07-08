@@ -4,6 +4,7 @@ import * as React from "react";
 import { usePathname } from "next/navigation";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Button, Card } from "@nabhaverse/ui";
+import { resolveStudioRouteSegment } from "@nabhaverse/studio-sdk";
 
 import { DocumentNavigation } from "@/components/world/document-navigation";
 import { isWorldPluginId } from "@/features/world/plugins/world-plugin-registry";
@@ -11,12 +12,7 @@ import { useWorldWorkspaceState } from "@/features/world/state/world-workspace-s
 import type { WorldPluginId } from "@/features/world/types/world.types";
 
 function resolveActivePlugin(pathname: string): WorldPluginId {
-  const segments = pathname.split("/").filter(Boolean);
-  const maybePlugin = segments[3];
-  if (!maybePlugin || !isWorldPluginId(maybePlugin)) {
-    return "overview";
-  }
-  return maybePlugin;
+  return resolveStudioRouteSegment(pathname, 3, isWorldPluginId, "overview");
 }
 
 export function WorldWorkspaceShell({

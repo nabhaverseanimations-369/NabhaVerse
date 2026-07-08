@@ -4,6 +4,7 @@ import * as React from "react";
 import { usePathname } from "next/navigation";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Button, Card } from "@nabhaverse/ui";
+import { resolveStudioRouteSegment } from "@nabhaverse/studio-sdk";
 
 import { DocumentNavigation } from "@/components/character/document-navigation";
 import { isCharacterSection } from "@/features/character/constants/character-sections";
@@ -11,12 +12,7 @@ import { useCharacterWorkspaceState } from "@/features/character/state/character
 import type { CharacterDocumentType } from "@/features/character/types/character.types";
 
 function resolveActiveSection(pathname: string): CharacterDocumentType {
-  const segments = pathname.split("/").filter(Boolean);
-  const maybeSection = segments[3];
-  if (!maybeSection || !isCharacterSection(maybeSection)) {
-    return "overview";
-  }
-  return maybeSection;
+  return resolveStudioRouteSegment(pathname, 3, isCharacterSection, "overview");
 }
 
 export function CharacterWorkspaceShell({

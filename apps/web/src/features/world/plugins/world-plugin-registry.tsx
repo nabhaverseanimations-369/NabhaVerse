@@ -34,6 +34,7 @@ import {
 } from "@/features/world/data/world-mocks";
 import {
   createStudioDocumentPlugin,
+  getStudioPluginOrThrow,
   isStudioPluginId,
   type StudioPluginDefinition,
 } from "@nabhaverse/studio-sdk";
@@ -355,9 +356,5 @@ export function isWorldPluginId(value: string): value is WorldPluginId {
 }
 
 export function getWorldPlugin(id: WorldPluginId) {
-  const plugin = worldPluginRegistry.find((entry) => entry.id === id);
-  if (!plugin) {
-    throw new Error(`Unknown world plugin: ${id}`);
-  }
-  return plugin;
+  return getStudioPluginOrThrow(worldPluginRegistry, id, "world");
 }

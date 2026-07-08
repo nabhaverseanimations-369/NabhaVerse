@@ -18,6 +18,7 @@ import {
 
 import {
   createStudioDocumentPlugin,
+  getStudioPluginOrThrow,
   isStudioPluginId,
   type StudioPluginDefinition,
 } from "@nabhaverse/studio-sdk";
@@ -256,9 +257,5 @@ export function isAIPluginId(value: string): value is AIPluginId {
 }
 
 export function getAIPlugin(id: AIPluginId): StudioPluginDefinition<AIStudioWorkspace, AIPluginId> {
-  const plugin = aiPluginRegistry.find((entry) => entry.id === id);
-  if (!plugin) {
-    throw new Error(`Unknown AI plugin: ${id}`);
-  }
-  return plugin;
+  return getStudioPluginOrThrow(aiPluginRegistry, id, "AI");
 }

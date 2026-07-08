@@ -31,6 +31,12 @@ export interface StudioPluginDefinition<TEntity, TId extends string = string> {
   description: string;
 }
 
+export interface StudioPluginDefaults {
+  permissions: readonly string[];
+  validation: readonly string[];
+  featureFlags: readonly string[];
+}
+
 export function createStudioDocumentPlugin<TEntity, TId extends string>(
   metadata: Omit<
     StudioPluginDefinition<TEntity, TId>,
@@ -54,6 +60,18 @@ export function buildStudioPluginLookup<TEntity, TId extends string>(
   plugins: readonly StudioPluginDefinition<TEntity, TId>[],
 ): Map<TId, StudioPluginDefinition<TEntity, TId>> {
   return new Map(plugins.map((plugin) => [plugin.id, plugin]));
+}
+
+export function getStudioPluginOrThrow<TEntity, TId extends string>(
+  plugins: readonly StudioPluginDefinition<TEntity, TId>[],
+  id: TId,
+  entityLabel: string,
+): StudioPluginDefinition<TEntity, TId> {
+  const plugin = plugins.find((entry) => entry.id === id);
+  if (!plugin) {
+    throw new Error(`Unknown ${entityLabel} plugin: ${id}`);
+  }
+  return plugin;
 }
 
 export function isStudioPluginId<TId extends string>(
