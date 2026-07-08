@@ -6,13 +6,12 @@ import { SignedIn, SignedOut, RedirectToSignIn, UserButton } from "@clerk/nextjs
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { Sidebar, useSidebarCollapsed } from "@/components/layout/sidebar";
-
-const hasClerkKey = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+import { clerkRoutes, hasClerkPublishableKey } from "@/lib/clerkConfig";
 
 export default function AppLayout({ children }: { children: React.ReactNode }): React.JSX.Element {
   const [collapsed, setCollapsed] = useSidebarCollapsed();
 
-  if (!hasClerkKey) {
+  if (!hasClerkPublishableKey) {
     return (
       <div className="flex min-h-screen bg-[var(--color-background)] text-[var(--color-text-primary)]">
         <Sidebar collapsed={collapsed} onCollapsedChange={setCollapsed} />
@@ -42,7 +41,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }): 
               <Breadcrumb />
               <div className="flex items-center gap-2">
                 <CommandPalette />
-                <UserButton afterSignOutUrl="/login" />
+                <UserButton afterSignOutUrl={clerkRoutes.afterSignOut} />
               </div>
             </header>
             <main className="flex-1 p-4 md:p-6">{children}</main>

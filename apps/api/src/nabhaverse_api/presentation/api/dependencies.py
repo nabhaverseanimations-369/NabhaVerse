@@ -31,6 +31,8 @@ async def get_current_identity(
     clerk_email: Annotated[str | None, Header(alias="X-Clerk-Email")] = None,
     clerk_name: Annotated[str | None, Header(alias="X-Clerk-Name")] = None,
 ) -> AuthIdentity:
+    # TODO(epic-2-cleanup): Restrict or remove header-based identity
+    # override outside local development.
     if clerk_user_id:
         return AuthIdentity(
             clerk_user_id=clerk_user_id,
