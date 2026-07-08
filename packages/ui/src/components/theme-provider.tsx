@@ -3,12 +3,15 @@
 import * as React from "react";
 
 export type Theme = "light" | "dark";
+export type ThemePreference = Theme | "system";
 
 export interface ThemeContextValue {
-  /** The currently active theme. */
-  theme: Theme;
+  /** The stored theme preference (light, dark, or system). */
+  theme: ThemePreference;
+  /** The effective resolved theme currently applied to the UI. */
+  resolvedTheme: Theme;
   /** Explicitly set the theme. */
-  setTheme: (theme: Theme) => void;
+  setTheme: (theme: ThemePreference) => void;
   /** Flip between light and dark. */
   toggleTheme: () => void;
 }
@@ -23,10 +26,10 @@ function applyThemeClass(theme: Theme): void {
   root.setAttribute("data-theme", theme);
 }
 
-function readStoredTheme(): Theme | undefined {
+function readStoredTheme(): ThemePreference | undefined {
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    return stored === "light" || stored === "dark" ? stored : undefined;
+    return stored === "light" || stored === "dark" || stored === "system" ? stored : undefined;
   } catch {
     return undefined;
   }
@@ -39,10 +42,17 @@ function readSystemTheme(): Theme {
   return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
 }
 
+function resolveTheme(theme: ThemePreference): Theme {
+  if (theme === "system") {
+    return readSystemTheme();
+  }
+  return theme;
+}
+
 export interface ThemeProviderProps {
   children: React.ReactNode;
-  /** Theme used before the client has hydrated / read persisted preference. Defaults to "dark". */
-  defaultTheme?: Theme;
+  /** Theme preference before hydration. Defaults to "system". */
+  defaultTheme?: ThemePreference;
 }
 
 /**
@@ -51,18 +61,45 @@ export interface ThemeProviderProps {
  * Implemented without third-party dependencies so it can live in the
  * framework-agnostic `packages/ui` component library.
  */
-export function ThemeProvider({ children, defaultTheme = "dark" }: ThemeProviderProps): React.JSX.Element {
-  const [theme, setThemeState] = React.useState<Theme>(defaultTheme);
+export function ThemeProvider({
+  children,
+  defaultTheme = "system",
+}: ThemeProviderProps): React.JSX.Element {
+  const [theme, setThemeState] = React.useState<ThemePreference>(defaultTheme);
+  const [resolvedTheme, setResolvedTheme] = React.useState<Theme>(resolveTheme(defaultTheme));
 
   React.useEffect(() => {
-    const initial = readStoredTheme() ?? readSystemTheme();
-    setThemeState(initial);
-    applyThemeClass(initial);
+    const initialPreference = readStoredTheme() ?? defaultTheme;
+    const nextResolved = resolveTheme(initialPreference);
+
+    setThemeState(initialPreference);
+    setResolvedTheme(nextResolved);
+    applyThemeClass(nextResolved);
+
+    return;
   }, []);
 
-  const setTheme = React.useCallback((next: Theme) => {
+  React.useEffect(() => {
+    if (theme !== "system" || typeof window.matchMedia !== "function") {
+      return;
+    }
+
+    const media = window.matchMedia("(prefers-color-scheme: light)");
+    const handleChange = (): void => {
+      const systemResolved = readSystemTheme();
+      setResolvedTheme(systemResolved);
+      applyThemeClass(systemResolved);
+    };
+
+    media.addEventListener("change", handleChange);
+    return () => media.removeEventListener("change", handleChange);
+  }, [theme]);
+
+  const setTheme = React.useCallback((next: ThemePreference) => {
+    const nextResolved = resolveTheme(next);
     setThemeState(next);
-    applyThemeClass(next);
+    setResolvedTheme(nextResolved);
+    applyThemeClass(nextResolved);
     try {
       window.localStorage.setItem(STORAGE_KEY, next);
     } catch {
@@ -71,12 +108,13 @@ export function ThemeProvider({ children, defaultTheme = "dark" }: ThemeProvider
   }, []);
 
   const toggleTheme = React.useCallback(() => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  }, [setTheme, theme]);
+    const basis = theme === "system" ? resolvedTheme : theme;
+    setTheme(basis === "dark" ? "light" : "dark");
+  }, [resolvedTheme, setTheme, theme]);
 
   const value = React.useMemo<ThemeContextValue>(
-    () => ({ theme, setTheme, toggleTheme }),
-    [theme, setTheme, toggleTheme],
+    () => ({ theme, resolvedTheme, setTheme, toggleTheme }),
+    [resolvedTheme, setTheme, theme, toggleTheme],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

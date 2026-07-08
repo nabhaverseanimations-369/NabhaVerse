@@ -12,7 +12,7 @@ import {
   Input,
 } from "@nabhaverse/ui";
 
-import { navItems } from "../navigation/nav-items";
+import { workspaceNavItems } from "../navigation/nav-items";
 
 /**
  * Global command palette triggered by the keyboard shortcut `Cmd/Ctrl+K` or
@@ -37,7 +37,9 @@ export function CommandPalette(): React.JSX.Element {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const filteredItems = navItems.filter((item) => item.label.toLowerCase().includes(query.toLowerCase()));
+  const filteredItems = workspaceNavItems.filter((item) =>
+    `${item.label} ${item.description}`.toLowerCase().includes(query.toLowerCase()),
+  );
 
   return (
     <>
@@ -50,7 +52,9 @@ export function CommandPalette(): React.JSX.Element {
       >
         <Search className="h-4 w-4" aria-hidden="true" />
         <span>Search…</span>
-        <kbd className="ml-4 rounded border border-[var(--color-border)] px-1.5 py-0.5 text-xs">⌘K</kbd>
+        <kbd className="ml-4 rounded border border-[var(--color-border)] px-1.5 py-0.5 text-xs">
+          ⌘K
+        </kbd>
       </Button>
 
       <Dialog
@@ -72,7 +76,11 @@ export function CommandPalette(): React.JSX.Element {
             onChange={(event) => setQuery(event.target.value)}
             aria-label="Search modules"
           />
-          <ul className="flex max-h-72 flex-col gap-1 overflow-y-auto" role="listbox" aria-label="Modules">
+          <ul
+            className="flex max-h-72 flex-col gap-1 overflow-y-auto"
+            role="listbox"
+            aria-label="Modules"
+          >
             {filteredItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -89,13 +97,18 @@ export function CommandPalette(): React.JSX.Element {
                     }}
                   >
                     <Icon className="h-4 w-4" aria-hidden="true" />
-                    {item.label}
+                    <span>{item.label}</span>
+                    <span className="text-xs text-[var(--color-text-secondary)]">
+                      {item.description}
+                    </span>
                   </button>
                 </li>
               );
             })}
             {filteredItems.length === 0 ? (
-              <li className="px-3 py-2 text-sm text-[var(--color-text-muted)]">No modules found.</li>
+              <li className="px-3 py-2 text-sm text-[var(--color-text-muted)]">
+                No modules found.
+              </li>
             ) : null}
           </ul>
         </DialogContent>

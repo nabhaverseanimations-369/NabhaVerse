@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { ChevronRight, Home } from "lucide-react";
 import { cn } from "@nabhaverse/ui";
 
+import { findWorkspaceGroup, findWorkspaceNavItem } from "@/components/navigation/nav-items";
+
 interface BreadcrumbSegment {
   label: string;
   href: string;
@@ -31,7 +33,15 @@ export type BreadcrumbProps = React.HTMLAttributes<HTMLElement>;
 /** Route-aware breadcrumb trail derived from the current pathname. */
 export function Breadcrumb({ className, ...props }: BreadcrumbProps): React.JSX.Element {
   const pathname = usePathname() ?? "/";
-  const segments = buildSegments(pathname);
+  const activeGroup = findWorkspaceGroup(pathname);
+  const activeItem = findWorkspaceNavItem(pathname);
+  const segments =
+    activeGroup && activeItem
+      ? [
+          { label: activeGroup.label, href: activeGroup.items[0]?.href ?? "/dashboard" },
+          { label: activeItem.label, href: activeItem.href },
+        ]
+      : buildSegments(pathname);
 
   return (
     <nav aria-label="Breadcrumb" className={cn("flex items-center text-sm", className)} {...props}>
