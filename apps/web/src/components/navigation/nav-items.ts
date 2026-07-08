@@ -113,6 +113,13 @@ export const workspaceNavGroups: readonly WorkspaceNavGroup[] = [
         icon: FolderKanban,
         description: "Pipeline status and operations",
       },
+      {
+        id: "production-studio",
+        label: "Production Studio",
+        href: "/production/studio",
+        icon: FolderKanban,
+        description: "Production planning and delivery workspace",
+      },
     ],
   },
   {
