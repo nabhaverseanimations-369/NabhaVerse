@@ -7,7 +7,7 @@ import { cn } from "../lib/cn";
 import { Button } from "./button";
 import { useTheme } from "./theme-provider";
 
-export interface ThemeToggleProps extends React.ComponentPropsWithoutRef<"button"> {}
+export type ThemeToggleProps = React.ComponentPropsWithoutRef<"button">;
 
 /** Icon button that flips between the light and dark theme. */
 export function ThemeToggle({ className, ...props }: ThemeToggleProps): React.JSX.Element {
