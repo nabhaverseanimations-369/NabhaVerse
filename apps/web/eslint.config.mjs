@@ -8,6 +8,9 @@ export default defineConfig([
   ...nextVitals,
   ...nextTypescript,
   {
+    ignores: ["storybook-static/**", "coverage/**"],
+  },
+  {
     files: ["**/*.{ts,tsx}"],
     rules: {
       "no-restricted-imports": [
@@ -16,7 +19,8 @@ export default defineConfig([
           patterns: [
             {
               group: ["@nabhaverse/database", "@nabhaverse/ai"],
-              message: "Web modules must consume server capabilities through contracts, never infrastructure packages.",
+              message:
+                "Web modules must consume server capabilities through contracts, never infrastructure packages.",
             },
             {
               group: ["../../api/**", "../../workers/**", "apps/api/**", "apps/workers/**"],

@@ -7,14 +7,12 @@ import { Button, cn } from "@nabhaverse/ui";
 
 import { SidebarNav } from "../navigation/sidebar-nav";
 
-const STORAGE_KEY = "nabhaverse_sidebar_collapsed";
-
 export interface SidebarProps {
   collapsed: boolean;
   onCollapsedChange: (collapsed: boolean) => void;
 }
 
-/** Collapsible primary navigation sidebar. Width and collapsed state persist to `localStorage`. */
+/** Collapsible primary navigation sidebar controlled by workspace navigation state. */
 export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps): React.JSX.Element {
   return (
     <aside
@@ -58,30 +56,4 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps): React.J
       </div>
     </aside>
   );
-}
-
-export function useSidebarCollapsed(): [boolean, (collapsed: boolean) => void] {
-  const [collapsed, setCollapsed] = React.useState(() => {
-    if (typeof window === "undefined") {
-      return false;
-    }
-    try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      return stored !== null ? stored === "true" : false;
-    } catch {
-      // Ignore storage read failures (e.g. private browsing mode).
-      return false;
-    }
-  });
-
-  const update = React.useCallback((next: boolean) => {
-    setCollapsed(next);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, String(next));
-    } catch {
-      // Ignore storage write failures.
-    }
-  }, []);
-
-  return [collapsed, update];
 }
