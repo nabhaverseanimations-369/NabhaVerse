@@ -25,6 +25,8 @@ async def get_session() -> AsyncIterator[AsyncSession]:
 
 
 async def init_db() -> None:
+    # TODO(epic-2-cleanup): Move to migration-only bootstrap (Alembic)
+    # and remove create_all at runtime.
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
 

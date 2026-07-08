@@ -1,10 +1,10 @@
 import { SignIn } from "@clerk/nextjs";
 import Link from "next/link";
 
-const hasClerkKey = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+import { clerkRoutes, hasClerkPublishableKey } from "@/lib/clerkConfig";
 
 export default function LoginPage(): React.JSX.Element {
-  if (!hasClerkKey) {
+  if (!hasClerkPublishableKey) {
     return (
       <section className="space-y-4">
         <h1 className="text-2xl font-semibold text-[var(--color-text-primary)]">
@@ -23,5 +23,11 @@ export default function LoginPage(): React.JSX.Element {
     );
   }
 
-  return <SignIn path="/login" signUpUrl="/signup" forceRedirectUrl="/dashboard" />;
+  return (
+    <SignIn
+      path={clerkRoutes.signIn}
+      signUpUrl={clerkRoutes.signUp}
+      forceRedirectUrl={clerkRoutes.afterSignIn}
+    />
+  );
 }
