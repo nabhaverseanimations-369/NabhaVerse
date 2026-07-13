@@ -103,3 +103,34 @@ def test_character_endpoints_crud_and_nested_routes(auth_headers: dict[str, str]
             headers=auth_headers,
         )
         assert delete_response.status_code == 204
+
+
+def test_character_create_rejects_owner_outside_studio(
+    auth_headers: dict[str, str],
+) -> None:
+    with TestClient(app) as client:
+        owner_session = client.get("/api/v1/auth/me", headers=auth_headers)
+        assert owner_session.status_code == 200
+        studio_id = owner_session.json()["memberships"][0]["studio"]["id"]
+
+        external_headers = {
+            "X-Clerk-User-Id": "user_external_owner_002",
+            "X-Clerk-Email": "external-owner@nabhaverse.test",
+            "X-Clerk-Name": "External Owner",
+        }
+        external_session = client.get("/api/v1/auth/me", headers=external_headers)
+        assert external_session.status_code == 200
+        external_user_id = external_session.json()["user"]["id"]
+
+        response = client.post(
+            f"/api/v1/characters?studioId={studio_id}",
+            headers=auth_headers,
+            json={
+                "name": "Boundary Character",
+                "status": "draft",
+                "ownerUserId": external_user_id,
+            },
+        )
+
+        assert response.status_code == 404
+        assert response.json()["detail"] == "Owner is not a member of this studio"

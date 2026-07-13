@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+from fastapi import HTTPException
 from nabhaverse_api.application.dto.character_dto import (
     CreateCharacterIn,
     CreateCharacterRelationshipIn,
@@ -157,6 +158,14 @@ async def test_character_service_flows(db_session: AsyncSession) -> None:
     )
     assert version.label == "v1.1"
 
+    membership_service = MembershipService(db_session)
+    await membership_service.create_membership(
+        actor_user_id=owner.user_id,
+        studio_id=studio_id,
+        target_user_id=collaborator.user_id,
+        role=Role.WRITER,
+    )
+
     related = await service.create_character(
         actor_user_id=owner.user_id,
         studio_id=studio_id,
@@ -193,3 +202,39 @@ async def test_character_service_flows(db_session: AsyncSession) -> None:
     )
     assert listed.pagination.total >= 1
     assert listed.items[0].id == created.id
+
+
+@pytest.mark.anyio
+async def test_character_service_rejects_owner_outside_studio(db_session: AsyncSession) -> None:
+    auth_service = AuthService(db_session)
+    owner = await auth_service.ensure_user(
+        AuthIdentity("clerk_owner_for_boundary", "owner-boundary@nabhaverse.test", "Owner", None)
+    )
+    external = await auth_service.ensure_user(
+        AuthIdentity(
+            "clerk_external_owner",
+            "external-owner@nabhaverse.test",
+            "External Owner",
+            None,
+        )
+    )
+
+    owner_session = await auth_service.current_session(
+        AuthIdentity("clerk_owner_for_boundary", "owner-boundary@nabhaverse.test", "Owner", None)
+    )
+    studio_id = owner_session.memberships[0].studio.id
+
+    service = CharacterService(db_session)
+    with pytest.raises(HTTPException) as excinfo:
+        await service.create_character(
+            actor_user_id=owner.user_id,
+            studio_id=studio_id,
+            payload=CreateCharacterIn(
+                name="Boundary Character",
+                status="draft",
+                ownerUserId=external.user_id,
+            ),
+        )
+
+    assert excinfo.value.status_code == 404
+    assert excinfo.value.detail == "Owner is not a member of this studio"

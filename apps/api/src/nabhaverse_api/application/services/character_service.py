@@ -77,6 +77,17 @@ class CharacterService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Character not found")
         return character
 
+    async def _require_owner_membership(self, *, studio_id: str, owner_user_id: str) -> None:
+        owner_membership = await self.memberships.get_by_user_and_studio(
+            user_id=owner_user_id,
+            studio_id=studio_id,
+        )
+        if owner_membership is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Owner is not a member of this studio",
+            )
+
     def _character_to_dto(self, character: CharacterModel) -> CharacterOut:
         active_version = next(
             (
@@ -194,6 +205,7 @@ class CharacterService:
         owner = await self.users.get_by_id(owner_user_id)
         if owner is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Owner not found")
+        await self._require_owner_membership(studio_id=studio_id, owner_user_id=owner_user_id)
 
         status_value = self.domain.validate_status(payload.status)
         tags = self.domain.normalize_tags(payload.tags)
@@ -272,6 +284,7 @@ class CharacterService:
         owner = await self.users.get_by_id(owner_user_id)
         if owner is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Owner not found")
+        await self._require_owner_membership(studio_id=studio_id, owner_user_id=owner_user_id)
 
         status_value = self.domain.validate_status(payload.status or character.status)
 
