@@ -1,7 +1,15 @@
 from __future__ import annotations
 
 import pytest
+from fastapi import HTTPException
+from nabhaverse_api.application.dto.character_dto import (
+    CreateCharacterIn,
+    CreateCharacterRelationshipIn,
+    CreateCharacterVersionIn,
+    UpdateCharacterIn,
+)
 from nabhaverse_api.application.services.auth_service import AuthService
+from nabhaverse_api.application.services.character_service import CharacterService
 from nabhaverse_api.application.services.membership_service import MembershipService
 from nabhaverse_api.application.services.studio_service import StudioService
 from nabhaverse_api.domain.auth.permissions import Role
@@ -93,3 +101,140 @@ async def test_membership_service_assigns_roles(db_session: AsyncSession) -> Non
     roles = RoleRepository(db_session)
     editor_role = await roles.get_by_name(Role.EDITOR)
     assert editor_role is not None
+
+
+@pytest.mark.anyio
+async def test_character_service_flows(db_session: AsyncSession) -> None:
+    auth_service = AuthService(db_session)
+    owner = await auth_service.ensure_user(
+        AuthIdentity("clerk_character_owner", "owner-char@nabhaverse.test", "Owner Char", None)
+    )
+    collaborator = await auth_service.ensure_user(
+        AuthIdentity("clerk_character_collab", "collab@nabhaverse.test", "Collab Char", None)
+    )
+
+    owner_session = await auth_service.current_session(
+        AuthIdentity("clerk_character_owner", "owner-char@nabhaverse.test", "Owner Char", None)
+    )
+    studio_id = owner_session.memberships[0].studio.id
+
+    service = CharacterService(db_session)
+    created = await service.create_character(
+        actor_user_id=owner.user_id,
+        studio_id=studio_id,
+        payload=CreateCharacterIn(
+            name="Aurora Vale",
+            status="draft",
+            summary="Pilot character",
+            tags=["Lead", "Pilot"],
+            favorite=True,
+        ),
+    )
+    assert created.name == "Aurora Vale"
+    assert created.tags == ["lead", "pilot"]
+
+    updated = await service.update_character(
+        actor_user_id=owner.user_id,
+        studio_id=studio_id,
+        character_id=created.id,
+        payload=UpdateCharacterIn(
+            status="approved",
+            summary="Approved pilot character",
+            lockVersion=created.lock_version,
+        ),
+    )
+    assert updated.status == "approved"
+
+    version = await service.create_version(
+        actor_user_id=owner.user_id,
+        studio_id=studio_id,
+        character_id=created.id,
+        payload=CreateCharacterVersionIn(
+            label="v1.1",
+            summary="Refined look",
+            snapshot={"change": "visual"},
+            active=True,
+        ),
+    )
+    assert version.label == "v1.1"
+
+    membership_service = MembershipService(db_session)
+    await membership_service.create_membership(
+        actor_user_id=owner.user_id,
+        studio_id=studio_id,
+        target_user_id=collaborator.user_id,
+        role=Role.WRITER,
+    )
+
+    related = await service.create_character(
+        actor_user_id=owner.user_id,
+        studio_id=studio_id,
+        payload=CreateCharacterIn(
+            name="Nox-7",
+            status="in-review",
+            summary="Tactician",
+            ownerUserId=collaborator.user_id,
+            tags=["android"],
+        ),
+    )
+
+    relationship = await service.create_relationship(
+        actor_user_id=owner.user_id,
+        studio_id=studio_id,
+        character_id=created.id,
+        payload=CreateCharacterRelationshipIn(
+            relatedCharacterId=related.id,
+            relationshipType="team",
+            notes="Operational pair",
+        ),
+    )
+    assert relationship.relationship_type == "team"
+
+    listed = await service.list_characters(
+        actor_user_id=owner.user_id,
+        studio_id=studio_id,
+        query="aurora",
+        tags=["lead"],
+        status_filters=["approved"],
+        owner_user_id=None,
+        limit=25,
+        offset=0,
+    )
+    assert listed.pagination.total >= 1
+    assert listed.items[0].id == created.id
+
+
+@pytest.mark.anyio
+async def test_character_service_rejects_owner_outside_studio(db_session: AsyncSession) -> None:
+    auth_service = AuthService(db_session)
+    owner = await auth_service.ensure_user(
+        AuthIdentity("clerk_owner_for_boundary", "owner-boundary@nabhaverse.test", "Owner", None)
+    )
+    external = await auth_service.ensure_user(
+        AuthIdentity(
+            "clerk_external_owner",
+            "external-owner@nabhaverse.test",
+            "External Owner",
+            None,
+        )
+    )
+
+    owner_session = await auth_service.current_session(
+        AuthIdentity("clerk_owner_for_boundary", "owner-boundary@nabhaverse.test", "Owner", None)
+    )
+    studio_id = owner_session.memberships[0].studio.id
+
+    service = CharacterService(db_session)
+    with pytest.raises(HTTPException) as excinfo:
+        await service.create_character(
+            actor_user_id=owner.user_id,
+            studio_id=studio_id,
+            payload=CreateCharacterIn(
+                name="Boundary Character",
+                status="draft",
+                ownerUserId=external.user_id,
+            ),
+        )
+
+    assert excinfo.value.status_code == 404
+    assert excinfo.value.detail == "Owner is not a member of this studio"
