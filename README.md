@@ -73,3 +73,11 @@ This runs lint, typecheck, tests, and build checks for the monorepo.
 Detailed setup and troubleshooting:
 
 - [docs/DEVELOPMENT_SETUP.md](docs/DEVELOPMENT_SETUP.md)
+
+## Core Engineering Documents
+
+- [docs/ARCHITECTURE_CONSTITUTION.md](docs/ARCHITECTURE_CONSTITUTION.md)
+- [docs/ENGINEERING_GUIDE.md](docs/ENGINEERING_GUIDE.md)
+- [docs/backend/BACKEND_PATTERNS.md](docs/backend/BACKEND_PATTERNS.md)
+- [docs/CODING_STANDARDS.md](docs/CODING_STANDARDS.md)
+- [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)
