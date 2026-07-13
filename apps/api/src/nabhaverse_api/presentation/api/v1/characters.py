@@ -17,7 +17,8 @@ from nabhaverse_api.application.dto.character_dto import (
 )
 from nabhaverse_api.application.services.character_service import CharacterService
 from nabhaverse_api.infrastructure.database.session import get_session
-from nabhaverse_api.presentation.api.dependencies import AuthContext, get_current_auth_context
+from nabhaverse_api.presentation.api.dependencies import CurrentAuthContext
+from nabhaverse_api.presentation.api.foundation import COMMON_ERROR_RESPONSES
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/characters", tags=["characters"])
@@ -30,9 +31,10 @@ router = APIRouter(prefix="/characters", tags=["characters"])
     description=(
         "List characters in a studio with PostgreSQL-backed " "search, filters, and pagination."
     ),
+    responses=COMMON_ERROR_RESPONSES,
 )
 async def list_characters(
-    context: Annotated[AuthContext, Depends(get_current_auth_context)],
+    context: CurrentAuthContext,
     session: Annotated[AsyncSession, Depends(get_session)],
     studio_id: Annotated[str, Query(alias="studioId", description="Studio identifier")],
     query: Annotated[str | None, Query()] = None,
@@ -61,10 +63,11 @@ async def list_characters(
     status_code=status.HTTP_201_CREATED,
     summary="Create character",
     description="Create a character, attach tags, and seed an initial version.",
+    responses=COMMON_ERROR_RESPONSES,
 )
 async def create_character(
     payload: CreateCharacterIn,
-    context: Annotated[AuthContext, Depends(get_current_auth_context)],
+    context: CurrentAuthContext,
     session: Annotated[AsyncSession, Depends(get_session)],
     studio_id: Annotated[str, Query(alias="studioId", description="Studio identifier")],
 ) -> CharacterOut:
@@ -81,10 +84,11 @@ async def create_character(
     response_model=CharacterOut,
     summary="Get character",
     description="Return a single character by identifier.",
+    responses=COMMON_ERROR_RESPONSES,
 )
 async def get_character(
     character_id: Annotated[str, Path(description="Character identifier")],
-    context: Annotated[AuthContext, Depends(get_current_auth_context)],
+    context: CurrentAuthContext,
     session: Annotated[AsyncSession, Depends(get_session)],
     studio_id: Annotated[str, Query(alias="studioId", description="Studio identifier")],
 ) -> CharacterOut:
@@ -101,11 +105,12 @@ async def get_character(
     response_model=CharacterOut,
     summary="Update character",
     description="Update mutable character fields with optimistic concurrency protection.",
+    responses=COMMON_ERROR_RESPONSES,
 )
 async def update_character(
     character_id: Annotated[str, Path(description="Character identifier")],
     payload: UpdateCharacterIn,
-    context: Annotated[AuthContext, Depends(get_current_auth_context)],
+    context: CurrentAuthContext,
     session: Annotated[AsyncSession, Depends(get_session)],
     studio_id: Annotated[str, Query(alias="studioId", description="Studio identifier")],
 ) -> CharacterOut:
@@ -123,10 +128,11 @@ async def update_character(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete character",
     description="Soft-delete a character.",
+    responses=COMMON_ERROR_RESPONSES,
 )
 async def delete_character(
     character_id: Annotated[str, Path(description="Character identifier")],
-    context: Annotated[AuthContext, Depends(get_current_auth_context)],
+    context: CurrentAuthContext,
     session: Annotated[AsyncSession, Depends(get_session)],
     studio_id: Annotated[str, Query(alias="studioId", description="Studio identifier")],
 ) -> Response:
@@ -144,10 +150,11 @@ async def delete_character(
     response_model=CharacterVersionPageOut,
     summary="List character versions",
     description="List versions for a character.",
+    responses=COMMON_ERROR_RESPONSES,
 )
 async def list_character_versions(
     character_id: Annotated[str, Path(description="Character identifier")],
-    context: Annotated[AuthContext, Depends(get_current_auth_context)],
+    context: CurrentAuthContext,
     session: Annotated[AsyncSession, Depends(get_session)],
     studio_id: Annotated[str, Query(alias="studioId", description="Studio identifier")],
     limit: Annotated[int, Query(ge=1, le=100)] = 25,
@@ -169,11 +176,12 @@ async def list_character_versions(
     status_code=status.HTTP_201_CREATED,
     summary="Create character version",
     description="Create a new version entry for a character and optionally mark it active.",
+    responses=COMMON_ERROR_RESPONSES,
 )
 async def create_character_version(
     character_id: Annotated[str, Path(description="Character identifier")],
     payload: CreateCharacterVersionIn,
-    context: Annotated[AuthContext, Depends(get_current_auth_context)],
+    context: CurrentAuthContext,
     session: Annotated[AsyncSession, Depends(get_session)],
     studio_id: Annotated[str, Query(alias="studioId", description="Studio identifier")],
 ) -> CharacterVersionOut:
@@ -191,10 +199,11 @@ async def create_character_version(
     response_model=CharacterRelationshipPageOut,
     summary="List character relationships",
     description="List relationships for a character.",
+    responses=COMMON_ERROR_RESPONSES,
 )
 async def list_character_relationships(
     character_id: Annotated[str, Path(description="Character identifier")],
-    context: Annotated[AuthContext, Depends(get_current_auth_context)],
+    context: CurrentAuthContext,
     session: Annotated[AsyncSession, Depends(get_session)],
     studio_id: Annotated[str, Query(alias="studioId", description="Studio identifier")],
     limit: Annotated[int, Query(ge=1, le=100)] = 25,
@@ -216,11 +225,12 @@ async def list_character_relationships(
     status_code=status.HTTP_201_CREATED,
     summary="Create character relationship",
     description="Create a directed relationship between two characters.",
+    responses=COMMON_ERROR_RESPONSES,
 )
 async def create_character_relationship(
     character_id: Annotated[str, Path(description="Character identifier")],
     payload: CreateCharacterRelationshipIn,
-    context: Annotated[AuthContext, Depends(get_current_auth_context)],
+    context: CurrentAuthContext,
     session: Annotated[AsyncSession, Depends(get_session)],
     studio_id: Annotated[str, Query(alias="studioId", description="Studio identifier")],
 ) -> CharacterRelationshipOut:

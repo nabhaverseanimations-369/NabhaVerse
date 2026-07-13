@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from fastapi import HTTPException
 from nabhaverse_api.application.dto.auth_dto import UserOut
+from nabhaverse_api.application.services.foundation import require_user
 from nabhaverse_api.infrastructure.database.repositories import UserRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,9 +11,7 @@ class UserService:
         self.users = UserRepository(session)
 
     async def get_user(self, user_id: str) -> UserOut:
-        user = await self.users.get_by_id(user_id)
-        if user is None:
-            raise HTTPException(status_code=404, detail="User not found")
+        user = await require_user(self.users, user_id)
 
         return UserOut(
             id=user.id,
@@ -25,9 +23,7 @@ class UserService:
         )
 
     async def update_preferences(self, user_id: str, preferences: dict[str, object]) -> UserOut:
-        user = await self.users.get_by_id(user_id)
-        if user is None:
-            raise HTTPException(status_code=404, detail="User not found")
+        user = await require_user(self.users, user_id)
 
         merged = {**user.preferences, **preferences}
         updated = await self.users.update_preferences(user, merged)

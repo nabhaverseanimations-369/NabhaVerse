@@ -3,23 +3,18 @@ from __future__ import annotations
 from fastapi import HTTPException
 from nabhaverse_api.application.dto.auth_dto import (
     MembershipOut,
-    PaginationOut,
     StudioOut,
     StudioPageOut,
 )
+from nabhaverse_api.application.services.foundation import to_pagination
 from nabhaverse_api.domain.auth.permissions import ROLE_PERMISSIONS, Role
+from nabhaverse_api.domain.shared.slug import slugify
 from nabhaverse_api.infrastructure.database.repositories import (
     MembershipRepository,
     RoleRepository,
     StudioRepository,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
-
-
-def slugify(value: str) -> str:
-    normalized = "".join(char.lower() if char.isalnum() else "-" for char in value)
-    slug = "-".join(part for part in normalized.split("-") if part)
-    return slug or "studio"
 
 
 class StudioService:
@@ -30,7 +25,7 @@ class StudioService:
         self.roles = RoleRepository(session)
 
     async def create_studio_for_user(self, user_id: str, name: str) -> StudioOut:
-        base_slug = slugify(name)
+        base_slug = slugify(name, fallback="studio")
         slug = base_slug
         collision_index = 1
         while await self.studios.get_by_slug(slug) is not None:
@@ -74,7 +69,7 @@ class StudioService:
                 )
                 for membership in items
             ],
-            pagination=PaginationOut(total=len(memberships), limit=limit, offset=offset),
+            pagination=to_pagination(total=len(memberships), limit=limit, offset=offset),
         )
 
     async def get_studio_for_user(self, *, user_id: str, studio_id: str) -> StudioOut:

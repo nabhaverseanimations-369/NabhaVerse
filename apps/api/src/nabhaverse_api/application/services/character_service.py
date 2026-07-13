@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import cast
 
-from fastapi import HTTPException, status
-from nabhaverse_api.application.dto.auth_dto import PaginationOut
 from nabhaverse_api.application.dto.character_dto import (
     CharacterOut,
     CharacterPageOut,
@@ -18,8 +16,16 @@ from nabhaverse_api.application.dto.character_dto import (
     RelationshipType,
     UpdateCharacterIn,
 )
-from nabhaverse_api.domain.auth.permissions import Permission, Role, has_permission
+from nabhaverse_api.application.services.foundation import (
+    AccessContext,
+    conflict,
+    not_found,
+    require_entity,
+    to_pagination,
+)
+from nabhaverse_api.domain.auth.permissions import Permission
 from nabhaverse_api.domain.characters.services import CharacterDomainService
+from nabhaverse_api.domain.shared.locking import validate_lock_version
 from nabhaverse_api.infrastructure.database.models import (
     CharacterModel,
     CharacterVersionModel,
@@ -47,17 +53,10 @@ class CharacterService:
         self.tags = CharacterTagRepository(session)
         self.versions = CharacterVersionRepository(session)
         self.relationships = CharacterRelationshipRepository(session)
+        self.access = AccessContext(self.memberships, self.users)
 
     async def _membership(self, *, actor_user_id: str, studio_id: str) -> MembershipModel:
-        membership = await self.memberships.get_by_user_and_studio(
-            user_id=actor_user_id,
-            studio_id=studio_id,
-        )
-        if membership is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Membership not found"
-            )
-        return membership
+        return await self.access.require_membership(user_id=actor_user_id, studio_id=studio_id)
 
     async def _require_permission(
         self,
@@ -66,16 +65,15 @@ class CharacterService:
         studio_id: str,
         permission: Permission,
     ) -> None:
-        membership = await self._membership(actor_user_id=actor_user_id, studio_id=studio_id)
-        role = Role(membership.role.name)
-        if not has_permission(role, permission):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Missing permission")
+        await self.access.require_permission(
+            actor_user_id=actor_user_id,
+            studio_id=studio_id,
+            permission=permission,
+        )
 
     async def _get_character(self, *, studio_id: str, character_id: str) -> CharacterModel:
         character = await self.characters.get_by_id(studio_id=studio_id, character_id=character_id)
-        if character is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Character not found")
-        return character
+        return require_entity(character, detail="Character not found")
 
     async def _require_owner_membership(self, *, studio_id: str, owner_user_id: str) -> None:
         owner_membership = await self.memberships.get_by_user_and_studio(
@@ -83,10 +81,7 @@ class CharacterService:
             studio_id=studio_id,
         )
         if owner_membership is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Owner is not a member of this studio",
-            )
+            raise not_found("Owner is not a member of this studio")
 
     def _character_to_dto(self, character: CharacterModel) -> CharacterOut:
         active_version = next(
@@ -185,7 +180,7 @@ class CharacterService:
         )
         return CharacterPageOut(
             items=[self._character_to_dto(item) for item in items],
-            pagination=PaginationOut(total=total, limit=limit, offset=offset),
+            pagination=to_pagination(total=total, limit=limit, offset=offset),
         )
 
     async def create_character(
@@ -202,9 +197,7 @@ class CharacterService:
         )
 
         owner_user_id = payload.owner_user_id or actor_user_id
-        owner = await self.users.get_by_id(owner_user_id)
-        if owner is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Owner not found")
+        await self.access.require_user(owner_user_id, detail="Owner not found")
         await self._require_owner_membership(studio_id=studio_id, owner_user_id=owner_user_id)
 
         status_value = self.domain.validate_status(payload.status)
@@ -275,15 +268,17 @@ class CharacterService:
         )
         character = await self._get_character(studio_id=studio_id, character_id=character_id)
 
-        if payload.lock_version != character.lock_version:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, detail="Character version conflict"
+        try:
+            validate_lock_version(
+                expected=payload.lock_version,
+                actual=character.lock_version,
+                entity_name="Character",
             )
+        except ValueError as exc:
+            raise conflict("Character version conflict") from exc
 
         owner_user_id = payload.owner_user_id or character.owner_user_id
-        owner = await self.users.get_by_id(owner_user_id)
-        if owner is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Owner not found")
+        await self.access.require_user(owner_user_id, detail="Owner not found")
         await self._require_owner_membership(studio_id=studio_id, owner_user_id=owner_user_id)
 
         status_value = self.domain.validate_status(payload.status or character.status)
@@ -308,10 +303,7 @@ class CharacterService:
             await self.session.commit()
         except StaleDataError as exc:
             await self.session.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Character version conflict",
-            ) from exc
+            raise conflict("Character version conflict") from exc
 
         updated = await self._get_character(studio_id=studio_id, character_id=character_id)
         return self._character_to_dto(updated)
@@ -355,7 +347,7 @@ class CharacterService:
         total = await self.versions.count_for_character(character.id)
         return CharacterVersionPageOut(
             items=[self._version_to_dto(item) for item in items],
-            pagination=PaginationOut(total=total, limit=limit, offset=offset),
+            pagination=to_pagination(total=total, limit=limit, offset=offset),
         )
 
     async def create_version(
@@ -428,7 +420,7 @@ class CharacterService:
                 )
                 for item in items
             ],
-            pagination=PaginationOut(total=total, limit=limit, offset=offset),
+            pagination=to_pagination(total=total, limit=limit, offset=offset),
         )
 
     async def create_relationship(
@@ -463,10 +455,7 @@ class CharacterService:
             relationship_type=relationship_type,
         )
         if existing is not None:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Relationship already exists",
-            )
+            raise conflict("Relationship already exists")
 
         created = await self.relationships.create(
             character_id=character.id,

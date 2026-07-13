@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+from helpers import make_auth_headers
 from nabhaverse_api.main import app
 
 
@@ -12,11 +13,11 @@ def test_auth_me_with_clerk_identity_headers() -> None:
     with TestClient(app) as client:
         response = client.get(
             "/api/v1/auth/me",
-            headers={
-                "X-Clerk-User-Id": "user_test_001",
-                "X-Clerk-Email": "user@nabhaverse.test",
-                "X-Clerk-Name": "Test User",
-            },
+            headers=make_auth_headers(
+                user_id="user_test_001",
+                email="user@nabhaverse.test",
+                name="Test User",
+            ),
         )
 
         assert response.status_code == 200
