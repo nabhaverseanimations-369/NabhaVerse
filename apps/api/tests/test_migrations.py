@@ -40,5 +40,13 @@ def test_alembic_upgrade_creates_identity_and_studio_tables(
         "character_relationships",
         "character_attachments",
         "character_activities",
+        "worlds",
+        "world_versions",
+        "world_regions",
+        "world_locations",
+        "world_timelines",
+        "world_relationships",
+        "world_tags",
+        "world_activities",
     }.issubset(tables)
     get_settings.cache_clear()

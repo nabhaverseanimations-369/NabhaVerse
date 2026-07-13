@@ -16,6 +16,12 @@ from nabhaverse_api.infrastructure.database.models import (
     RolePermissionModel,
     StudioModel,
     UserModel,
+    WorldLocationModel,
+    WorldModel,
+    WorldRegionModel,
+    WorldRelationshipModel,
+    WorldTagModel,
+    WorldVersionModel,
 )
 from sqlalchemy import delete, exists, func, or_, select, update
 from sqlalchemy.orm import selectinload
@@ -567,3 +573,493 @@ class CharacterRelationshipRepository(BaseRepository[CharacterRelationshipModel]
         )
         count = await self.session.scalar(statement)
         return int(count or 0)
+
+
+class WorldRepository(BaseRepository[WorldModel]):
+
+    async def create(
+        self,
+        *,
+        studio_id: str,
+        owner_user_id: str,
+        slug: str,
+        name: str,
+        status: str,
+        description: str,
+        cover_image_url: str | None,
+        timeline_summary: str,
+        is_favorite: bool,
+    ) -> WorldModel:
+        world = WorldModel(
+            studio_id=studio_id,
+            owner_user_id=owner_user_id,
+            slug=slug,
+            name=name,
+            status=status,
+            description=description,
+            cover_image_url=cover_image_url,
+            timeline_summary=timeline_summary,
+            is_favorite=is_favorite,
+        )
+        return await self.add_and_flush(world)
+
+    async def get_by_id(self, world_id: str) -> WorldModel | None:
+        statement = (
+            select(WorldModel)
+            .options(
+                selectinload(WorldModel.studio),
+                selectinload(WorldModel.tags),
+                selectinload(WorldModel.versions),
+                selectinload(WorldModel.regions),
+                selectinload(WorldModel.locations),
+            )
+            .where(WorldModel.id == world_id, WorldModel.deleted_at.is_(None))
+        )
+        return cast(WorldModel | None, await self.session.scalar(statement))
+
+    async def get_by_slug(self, *, studio_id: str, slug: str) -> WorldModel | None:
+        statement = select(WorldModel).where(
+            WorldModel.studio_id == studio_id,
+            WorldModel.slug == slug,
+            WorldModel.deleted_at.is_(None),
+        )
+        return cast(WorldModel | None, await self.session.scalar(statement))
+
+    def _filters(
+        self,
+        *,
+        studio_id: str,
+        query: str | None,
+        tags: list[str],
+        status: list[str],
+        region_id: str | None,
+        location_id: str | None,
+    ) -> list[ColumnElement[bool]]:
+        filters: list[ColumnElement[bool]] = [
+            WorldModel.studio_id == studio_id,
+            WorldModel.deleted_at.is_(None),
+        ]
+        if status:
+            filters.append(WorldModel.status.in_(status))
+        if region_id:
+            filters.append(
+                exists(
+                    select(WorldRegionModel.id).where(
+                        WorldRegionModel.world_id == WorldModel.id,
+                        WorldRegionModel.id == region_id,
+                        WorldRegionModel.deleted_at.is_(None),
+                    )
+                )
+            )
+        if location_id:
+            filters.append(
+                exists(
+                    select(WorldLocationModel.id).where(
+                        WorldLocationModel.world_id == WorldModel.id,
+                        WorldLocationModel.id == location_id,
+                        WorldLocationModel.deleted_at.is_(None),
+                    )
+                )
+            )
+        if query:
+            q = f"%{query.strip().lower()}%"
+            tag_match = exists(
+                select(WorldTagModel.id).where(
+                    WorldTagModel.world_id == WorldModel.id,
+                    WorldTagModel.deleted_at.is_(None),
+                    func.lower(WorldTagModel.tag).like(q),
+                )
+            )
+            region_match = exists(
+                select(WorldRegionModel.id).where(
+                    WorldRegionModel.world_id == WorldModel.id,
+                    WorldRegionModel.deleted_at.is_(None),
+                    func.lower(WorldRegionModel.name).like(q),
+                )
+            )
+            location_match = exists(
+                select(WorldLocationModel.id).where(
+                    WorldLocationModel.world_id == WorldModel.id,
+                    WorldLocationModel.deleted_at.is_(None),
+                    func.lower(WorldLocationModel.name).like(q),
+                )
+            )
+            studio_match = exists(
+                select(StudioModel.id).where(
+                    StudioModel.id == WorldModel.studio_id,
+                    StudioModel.deleted_at.is_(None),
+                    func.lower(StudioModel.name).like(q),
+                )
+            )
+            filters.append(
+                or_(
+                    func.lower(WorldModel.name).like(q),
+                    func.lower(WorldModel.description).like(q),
+                    tag_match,
+                    region_match,
+                    location_match,
+                    studio_match,
+                )
+            )
+        for tag in tags:
+            normalized = tag.strip().lower()
+            if not normalized:
+                continue
+            filters.append(
+                exists(
+                    select(WorldTagModel.id).where(
+                        WorldTagModel.world_id == WorldModel.id,
+                        WorldTagModel.deleted_at.is_(None),
+                        func.lower(WorldTagModel.tag) == normalized,
+                    )
+                )
+            )
+        return filters
+
+    async def list_for_studio(
+        self,
+        *,
+        studio_id: str,
+        query: str | None,
+        tags: list[str],
+        status: list[str],
+        region_id: str | None,
+        location_id: str | None,
+        limit: int,
+        offset: int,
+    ) -> list[WorldModel]:
+        statement = (
+            select(WorldModel)
+            .options(
+                selectinload(WorldModel.studio),
+                selectinload(WorldModel.tags),
+                selectinload(WorldModel.versions),
+                selectinload(WorldModel.regions),
+                selectinload(WorldModel.locations),
+            )
+            .where(
+                *self._filters(
+                    studio_id=studio_id,
+                    query=query,
+                    tags=tags,
+                    status=status,
+                    region_id=region_id,
+                    location_id=location_id,
+                )
+            )
+            .order_by(WorldModel.updated_at.desc())
+        )
+        statement = self.paginate(statement, limit=limit, offset=offset)
+        rows = await self.session.scalars(statement)
+        return list(rows.all())
+
+    async def count_for_studio(
+        self,
+        *,
+        studio_id: str,
+        query: str | None,
+        tags: list[str],
+        status: list[str],
+        region_id: str | None,
+        location_id: str | None,
+    ) -> int:
+        statement = select(func.count(WorldModel.id)).where(
+            *self._filters(
+                studio_id=studio_id,
+                query=query,
+                tags=tags,
+                status=status,
+                region_id=region_id,
+                location_id=location_id,
+            )
+        )
+        count = await self.session.scalar(statement)
+        return int(count or 0)
+
+    async def update(
+        self,
+        world: WorldModel,
+        *,
+        name: str,
+        status: str,
+        description: str,
+        cover_image_url: str | None,
+        timeline_summary: str,
+        is_favorite: bool,
+    ) -> WorldModel:
+        world.name = name
+        world.status = status
+        world.description = description
+        world.cover_image_url = cover_image_url
+        world.timeline_summary = timeline_summary
+        world.is_favorite = is_favorite
+        await self.session.flush()
+        return world
+
+    async def set_active_version(self, world: WorldModel, version_id: str) -> WorldModel:
+        world.active_version_id = version_id
+        await self.session.flush()
+        return world
+
+
+class WorldTagRepository(BaseRepository[WorldTagModel]):
+
+    async def list_for_world(self, world_id: str) -> list[WorldTagModel]:
+        statement = (
+            select(WorldTagModel)
+            .where(WorldTagModel.world_id == world_id, WorldTagModel.deleted_at.is_(None))
+            .order_by(WorldTagModel.tag.asc())
+        )
+        rows = await self.session.scalars(statement)
+        return list(rows.all())
+
+    async def replace_tags(self, *, world_id: str, tags: list[str]) -> list[WorldTagModel]:
+        existing = await self.list_for_world(world_id)
+        existing_map = {row.tag.lower(): row for row in existing}
+        target = {tag.strip().lower(): tag.strip() for tag in tags if tag.strip()}
+
+        now = utc_now()
+        for row in existing:
+            if row.tag.lower() not in target:
+                row.deleted_at = now
+
+        for key, value in target.items():
+            if key in existing_map and existing_map[key].deleted_at is None:
+                continue
+            await self.add_and_flush(WorldTagModel(world_id=world_id, tag=value))
+
+        return await self.list_for_world(world_id)
+
+
+class WorldVersionRepository(BaseRepository[WorldVersionModel]):
+
+    async def create(
+        self,
+        *,
+        world_id: str,
+        author_user_id: str,
+        label: str,
+        summary: str,
+        snapshot: dict[str, object],
+        is_active: bool,
+    ) -> WorldVersionModel:
+        version = WorldVersionModel(
+            world_id=world_id,
+            author_user_id=author_user_id,
+            label=label,
+            summary=summary,
+            snapshot=snapshot,
+            is_active=is_active,
+        )
+        return await self.add_and_flush(version)
+
+    async def list_for_world(
+        self,
+        *,
+        world_id: str,
+        limit: int,
+        offset: int,
+    ) -> list[WorldVersionModel]:
+        statement = (
+            select(WorldVersionModel)
+            .options(selectinload(WorldVersionModel.author))
+            .where(WorldVersionModel.world_id == world_id, WorldVersionModel.deleted_at.is_(None))
+            .order_by(WorldVersionModel.created_at.desc())
+        )
+        statement = self.paginate(statement, limit=limit, offset=offset)
+        rows = await self.session.scalars(statement)
+        return list(rows.all())
+
+    async def count_for_world(self, world_id: str) -> int:
+        statement = select(func.count(WorldVersionModel.id)).where(
+            WorldVersionModel.world_id == world_id,
+            WorldVersionModel.deleted_at.is_(None),
+        )
+        count = await self.session.scalar(statement)
+        return int(count or 0)
+
+    async def deactivate_active_for_world(self, world_id: str) -> None:
+        statement = (
+            update(WorldVersionModel)
+            .where(
+                WorldVersionModel.world_id == world_id,
+                WorldVersionModel.is_active.is_(True),
+                WorldVersionModel.deleted_at.is_(None),
+            )
+            .values(is_active=False)
+        )
+        await self.session.execute(statement)
+        await self.session.flush()
+
+
+class WorldRegionRepository(BaseRepository[WorldRegionModel]):
+
+    async def create(
+        self,
+        *,
+        world_id: str,
+        parent_region_id: str | None,
+        slug: str,
+        name: str,
+        kind: str,
+        summary: str,
+    ) -> WorldRegionModel:
+        region = WorldRegionModel(
+            world_id=world_id,
+            parent_region_id=parent_region_id,
+            slug=slug,
+            name=name,
+            kind=kind,
+            summary=summary,
+        )
+        return await self.add_and_flush(region)
+
+    async def get_by_id(self, region_id: str) -> WorldRegionModel | None:
+        statement = select(WorldRegionModel).where(
+            WorldRegionModel.id == region_id,
+            WorldRegionModel.deleted_at.is_(None),
+        )
+        return cast(WorldRegionModel | None, await self.session.scalar(statement))
+
+    async def get_by_slug(self, *, world_id: str, slug: str) -> WorldRegionModel | None:
+        statement = select(WorldRegionModel).where(
+            WorldRegionModel.world_id == world_id,
+            WorldRegionModel.slug == slug,
+            WorldRegionModel.deleted_at.is_(None),
+        )
+        return cast(WorldRegionModel | None, await self.session.scalar(statement))
+
+    async def list_for_world(
+        self,
+        *,
+        world_id: str,
+        limit: int,
+        offset: int,
+    ) -> list[WorldRegionModel]:
+        statement = (
+            select(WorldRegionModel)
+            .where(WorldRegionModel.world_id == world_id, WorldRegionModel.deleted_at.is_(None))
+            .order_by(WorldRegionModel.name.asc())
+        )
+        statement = self.paginate(statement, limit=limit, offset=offset)
+        rows = await self.session.scalars(statement)
+        return list(rows.all())
+
+    async def count_for_world(self, world_id: str) -> int:
+        statement = select(func.count(WorldRegionModel.id)).where(
+            WorldRegionModel.world_id == world_id,
+            WorldRegionModel.deleted_at.is_(None),
+        )
+        count = await self.session.scalar(statement)
+        return int(count or 0)
+
+
+class WorldLocationRepository(BaseRepository[WorldLocationModel]):
+
+    async def create(
+        self,
+        *,
+        world_id: str,
+        region_id: str | None,
+        slug: str,
+        name: str,
+        location_type: str,
+        summary: str,
+    ) -> WorldLocationModel:
+        location = WorldLocationModel(
+            world_id=world_id,
+            region_id=region_id,
+            slug=slug,
+            name=name,
+            location_type=location_type,
+            summary=summary,
+        )
+        return await self.add_and_flush(location)
+
+    async def get_by_slug(self, *, world_id: str, slug: str) -> WorldLocationModel | None:
+        statement = select(WorldLocationModel).where(
+            WorldLocationModel.world_id == world_id,
+            WorldLocationModel.slug == slug,
+            WorldLocationModel.deleted_at.is_(None),
+        )
+        return cast(WorldLocationModel | None, await self.session.scalar(statement))
+
+    async def list_for_world(
+        self,
+        *,
+        world_id: str,
+        limit: int,
+        offset: int,
+    ) -> list[WorldLocationModel]:
+        statement = (
+            select(WorldLocationModel)
+            .where(WorldLocationModel.world_id == world_id, WorldLocationModel.deleted_at.is_(None))
+            .order_by(WorldLocationModel.name.asc())
+        )
+        statement = self.paginate(statement, limit=limit, offset=offset)
+        rows = await self.session.scalars(statement)
+        return list(rows.all())
+
+    async def count_for_world(self, world_id: str) -> int:
+        statement = select(func.count(WorldLocationModel.id)).where(
+            WorldLocationModel.world_id == world_id,
+            WorldLocationModel.deleted_at.is_(None),
+        )
+        count = await self.session.scalar(statement)
+        return int(count or 0)
+
+
+class WorldRelationshipRepository(BaseRepository[WorldRelationshipModel]):
+
+    async def create(
+        self,
+        *,
+        world_id: str,
+        related_world_id: str,
+        relationship_type: str,
+        notes: str,
+        created_by_user_id: str,
+    ) -> WorldRelationshipModel:
+        relationship = WorldRelationshipModel(
+            world_id=world_id,
+            related_world_id=related_world_id,
+            relationship_type=relationship_type,
+            notes=notes,
+            created_by_user_id=created_by_user_id,
+        )
+        return await self.add_and_flush(relationship)
+
+    async def get_by_pair(
+        self,
+        *,
+        world_id: str,
+        related_world_id: str,
+        relationship_type: str,
+    ) -> WorldRelationshipModel | None:
+        statement = select(WorldRelationshipModel).where(
+            WorldRelationshipModel.world_id == world_id,
+            WorldRelationshipModel.related_world_id == related_world_id,
+            WorldRelationshipModel.relationship_type == relationship_type,
+            WorldRelationshipModel.deleted_at.is_(None),
+        )
+        return cast(WorldRelationshipModel | None, await self.session.scalar(statement))
+
+    async def list_for_world(
+        self,
+        *,
+        world_id: str,
+        limit: int,
+        offset: int,
+    ) -> list[WorldRelationshipModel]:
+        statement = (
+            select(WorldRelationshipModel)
+            .options(selectinload(WorldRelationshipModel.related_world))
+            .where(
+                WorldRelationshipModel.world_id == world_id,
+                WorldRelationshipModel.deleted_at.is_(None),
+            )
+            .order_by(WorldRelationshipModel.created_at.desc())
+        )
+        statement = self.paginate(statement, limit=limit, offset=offset)
+        rows = await self.session.scalars(statement)
+        return list(rows.all())

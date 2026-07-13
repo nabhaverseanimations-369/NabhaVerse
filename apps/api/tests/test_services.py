@@ -8,10 +8,18 @@ from nabhaverse_api.application.dto.character_dto import (
     CreateCharacterVersionIn,
     UpdateCharacterIn,
 )
+from nabhaverse_api.application.dto.world_dto import (
+    CreateWorldIn,
+    CreateWorldLocationIn,
+    CreateWorldRegionIn,
+    CreateWorldVersionIn,
+    UpdateWorldIn,
+)
 from nabhaverse_api.application.services.auth_service import AuthService
 from nabhaverse_api.application.services.character_service import CharacterService
 from nabhaverse_api.application.services.membership_service import MembershipService
 from nabhaverse_api.application.services.studio_service import StudioService
+from nabhaverse_api.application.services.world_service import WorldService
 from nabhaverse_api.domain.auth.permissions import Role
 from nabhaverse_api.infrastructure.auth.clerk import AuthIdentity
 from nabhaverse_api.infrastructure.database.repositories import RoleRepository, UserRepository
@@ -238,3 +246,83 @@ async def test_character_service_rejects_owner_outside_studio(db_session: AsyncS
 
     assert excinfo.value.status_code == 404
     assert excinfo.value.detail == "Owner is not a member of this studio"
+
+
+@pytest.mark.anyio
+async def test_world_service_flows(db_session: AsyncSession) -> None:
+    auth_service = AuthService(db_session)
+    owner = await auth_service.ensure_user(
+        AuthIdentity("clerk_world_owner", "owner-world@nabhaverse.test", "World Owner", None)
+    )
+
+    owner_session = await auth_service.current_session(
+        AuthIdentity("clerk_world_owner", "owner-world@nabhaverse.test", "World Owner", None)
+    )
+    studio_id = owner_session.memberships[0].studio.id
+
+    service = WorldService(db_session)
+    created = await service.create_world(
+        actor_user_id=owner.user_id,
+        studio_id=studio_id,
+        payload=CreateWorldIn(
+            name="Lunara Basin",
+            status="draft",
+            description="Tidal civilization",
+            tags=["coastal", "trade"],
+            favorite=True,
+            initialVersionLabel="v1.0",
+            timelineSummary="Era of treaties",
+        ),
+    )
+    assert created.name == "Lunara Basin"
+    assert created.tags == ["coastal", "trade"]
+
+    listed = await service.list_worlds(
+        actor_user_id=owner.user_id,
+        studio_id=studio_id,
+        query="lunara",
+        tags=["coastal"],
+        status_filters=["draft"],
+        region_id=None,
+        location_id=None,
+        limit=25,
+        offset=0,
+    )
+    assert listed.pagination.total >= 1
+
+    updated = await service.update_world(
+        actor_user_id=owner.user_id,
+        world_id=created.id,
+        payload=UpdateWorldIn(
+            status="published",
+            description="Published world",
+            lockVersion=created.lock_version,
+        ),
+    )
+    assert updated.status == "published"
+
+    version = await service.create_version(
+        actor_user_id=owner.user_id,
+        world_id=created.id,
+        payload=CreateWorldVersionIn(label="v1.1", summary="Lore expansion", active=True),
+    )
+    assert version.label == "v1.1"
+
+    region = await service.create_region(
+        actor_user_id=owner.user_id,
+        world_id=created.id,
+        payload=CreateWorldRegionIn(name="North Coast", kind="coastal", summary="Harbor belt"),
+    )
+    assert region.name == "North Coast"
+
+    location = await service.create_location(
+        actor_user_id=owner.user_id,
+        world_id=created.id,
+        payload=CreateWorldLocationIn(
+            name="Lantern Harbor",
+            regionId=region.id,
+            locationType="city",
+            summary="Main port",
+        ),
+    )
+    assert location.name == "Lantern Harbor"
