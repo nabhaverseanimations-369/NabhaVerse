@@ -11,6 +11,11 @@ from nabhaverse_api.infrastructure.database.repositories import (
     RoleRepository,
     StudioRepository,
     UserRepository,
+    WorldLocationRepository,
+    WorldRegionRepository,
+    WorldRepository,
+    WorldTagRepository,
+    WorldVersionRepository,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -163,3 +168,89 @@ async def test_character_repositories_support_search_and_relations(
     )
     assert len(relation_rows) == 1
     assert relation_rows[0].related_character_id == counterpart.id
+
+
+@pytest.mark.anyio
+async def test_world_repositories_support_search_and_hierarchy(db_session: AsyncSession) -> None:
+    users = UserRepository(db_session)
+    studios = StudioRepository(db_session)
+    roles = RoleRepository(db_session)
+    memberships = MembershipRepository(db_session)
+    worlds = WorldRepository(db_session)
+    tags = WorldTagRepository(db_session)
+    versions = WorldVersionRepository(db_session)
+    regions = WorldRegionRepository(db_session)
+    locations = WorldLocationRepository(db_session)
+
+    owner = await users.create(
+        clerk_user_id="clerk_world_owner_repo",
+        email="world-owner@nabhaverse.test",
+        full_name="World Owner",
+        avatar_url=None,
+    )
+    studio = await studios.create(name="World Studio", slug="world-studio")
+    owner_role = await roles.get_by_name(Role.OWNER)
+    assert owner_role is not None
+
+    await memberships.create(user_id=owner.id, studio_id=studio.id, role_id=owner_role.id)
+
+    world = await worlds.create(
+        studio_id=studio.id,
+        owner_user_id=owner.id,
+        slug="lunara-basin",
+        name="Lunara Basin",
+        status="published",
+        description="Tidal fantasy world",
+        cover_image_url=None,
+        timeline_summary="Age of treaties",
+        is_favorite=True,
+    )
+    await tags.replace_tags(world_id=world.id, tags=["coastal", "trade"])
+    version = await versions.create(
+        world_id=world.id,
+        author_user_id=owner.id,
+        label="v1.0",
+        summary="Initial release",
+        snapshot={"kind": "initial"},
+        is_active=True,
+    )
+    await worlds.set_active_version(world, version.id)
+
+    region = await regions.create(
+        world_id=world.id,
+        parent_region_id=None,
+        slug="north-coast",
+        name="North Coast",
+        kind="coastal",
+        summary="Trade harbors",
+    )
+    await locations.create(
+        world_id=world.id,
+        region_id=region.id,
+        slug="lantern-harbor",
+        name="Lantern Harbor",
+        location_type="city",
+        summary="Main trading city",
+    )
+    await db_session.commit()
+
+    filtered = await worlds.list_for_studio(
+        studio_id=studio.id,
+        query="lantern",
+        tags=["trade"],
+        status=["published"],
+        region_id=region.id,
+        location_id=None,
+        limit=10,
+        offset=0,
+    )
+    assert len(filtered) == 1
+    assert filtered[0].name == "Lunara Basin"
+
+    region_rows = await regions.list_for_world(world_id=world.id, limit=10, offset=0)
+    assert len(region_rows) == 1
+    assert region_rows[0].name == "North Coast"
+
+    location_rows = await locations.list_for_world(world_id=world.id, limit=10, offset=0)
+    assert len(location_rows) == 1
+    assert location_rows[0].name == "Lantern Harbor"
