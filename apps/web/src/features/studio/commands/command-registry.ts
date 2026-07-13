@@ -12,7 +12,19 @@ export interface NavigationCommandSource {
   href: string;
 }
 
-export type GlobalCommandId = `navigate:${string}`;
+export interface StaticCommandSource {
+  id: string;
+  title: string;
+  description: string;
+  category: StudioCommandCategory;
+  keywords: readonly string[];
+  href?: string;
+  enabledByDefault?: boolean;
+  shortcut?: StudioKeyboardShortcut;
+  metadata?: Record<string, string | number | boolean | null>;
+}
+
+export type GlobalCommandId = `navigate:${string}` | `command:${string}`;
 
 const defaultShortcut: StudioKeyboardShortcut = {
   key: "k",
@@ -49,8 +61,39 @@ export function createNavigationCommands(
   }));
 }
 
-export function createGlobalCommandRegistry(items: readonly NavigationCommandSource[]) {
-  return createStudioCommandRegistry(createNavigationCommands(items));
+export function createStaticCommands(
+  commands: readonly StaticCommandSource[],
+): readonly StudioCommandDefinition<GlobalCommandId>[] {
+  return commands.map((command) => {
+    const definition: StudioCommandDefinition<GlobalCommandId> = {
+      id: `command:${command.id}`,
+      title: command.title,
+      description: command.description,
+      category: command.category,
+      keywords: command.keywords,
+      enabledByDefault: command.enabledByDefault ?? true,
+      metadata: {
+        ...(command.href ? { href: command.href } : {}),
+        ...(command.metadata ?? {}),
+      },
+    };
+
+    if (command.shortcut) {
+      definition.shortcut = command.shortcut;
+    }
+
+    return definition;
+  });
+}
+
+export function createGlobalCommandRegistry(
+  items: readonly NavigationCommandSource[],
+  extraCommands: readonly StaticCommandSource[] = [],
+) {
+  return createStudioCommandRegistry([
+    ...createNavigationCommands(items),
+    ...createStaticCommands(extraCommands),
+  ]);
 }
 
 export function commandHref(command: StudioCommandDefinition): string | null {
