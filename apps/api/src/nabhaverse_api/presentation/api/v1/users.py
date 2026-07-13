@@ -12,7 +12,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.get("/me", response_model=UserOut)
+@router.get(
+    "/me",
+    response_model=UserOut,
+    summary="Get current profile",
+    description="Return the authenticated backend user profile synchronized from Clerk.",
+)
 async def get_me(
     context: Annotated[AuthContext, Depends(get_current_auth_context)],
     session: Annotated[AsyncSession, Depends(get_session)],
@@ -21,7 +26,12 @@ async def get_me(
     return await service.get_user(context.user_id)
 
 
-@router.patch("/me/preferences", response_model=UserOut)
+@router.patch(
+    "/me/preferences",
+    response_model=UserOut,
+    summary="Update profile preferences",
+    description="Merge profile preferences for the authenticated user.",
+)
 async def update_preferences(
     payload: UpdatePreferencesIn,
     context: Annotated[AuthContext, Depends(get_current_auth_context)],

@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 from fastapi import HTTPException
-from nabhaverse_api.application.dto.auth_dto import MembershipOut, StudioOut
+from nabhaverse_api.application.dto.auth_dto import (
+    MembershipOut,
+    PaginationOut,
+    StudioOut,
+    StudioPageOut,
+)
 from nabhaverse_api.domain.auth.permissions import ROLE_PERMISSIONS, Role
 from nabhaverse_api.infrastructure.database.repositories import (
     MembershipRepository,
@@ -42,21 +47,44 @@ class StudioService:
 
         return StudioOut(id=studio.id, name=studio.name, slug=studio.slug)
 
-    async def list_memberships_for_user(self, user_id: str) -> list[MembershipOut]:
+    async def list_memberships_for_user(
+        self,
+        *,
+        user_id: str,
+        limit: int,
+        offset: int,
+    ) -> StudioPageOut:
         memberships = await self.memberships.list_for_user(user_id)
-        return [
-            MembershipOut(
-                id=membership.id,
-                studio=StudioOut(
+        items = memberships[offset : offset + limit]
+        return StudioPageOut(
+            items=[
+                MembershipOut(
+                    id=membership.id,
+                    userId=membership.user_id,
+                    studio=StudioOut(
+                        id=membership.studio.id,
+                        name=membership.studio.name,
+                        slug=membership.studio.slug,
+                    ),
+                    role=Role(membership.role.name),
+                    permissions=sorted(
+                        ROLE_PERMISSIONS[Role(membership.role.name)],
+                        key=lambda permission: permission.value,
+                    ),
+                )
+                for membership in items
+            ],
+            pagination=PaginationOut(total=len(memberships), limit=limit, offset=offset),
+        )
+
+    async def get_studio_for_user(self, *, user_id: str, studio_id: str) -> StudioOut:
+        memberships = await self.memberships.list_for_user(user_id)
+        for membership in memberships:
+            if membership.studio.id == studio_id:
+                return StudioOut(
                     id=membership.studio.id,
                     name=membership.studio.name,
                     slug=membership.studio.slug,
-                ),
-                role=Role(membership.role.name),
-                permissions=sorted(
-                    ROLE_PERMISSIONS[Role(membership.role.name)],
-                    key=lambda permission: permission.value,
-                ),
-            )
-            for membership in memberships
-        ]
+                )
+
+        raise HTTPException(status_code=404, detail="Studio not found")

@@ -1,17 +1,21 @@
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator
+from pathlib import Path
 from typing import cast
 
+from alembic import command
+from alembic.config import Config
 from nabhaverse_api.domain.auth.permissions import ROLE_PERMISSIONS, Permission, Role
 from nabhaverse_api.infrastructure.config import get_settings
 from nabhaverse_api.infrastructure.database.models import (
-    Base,
     PermissionModel,
     RoleModel,
     RolePermissionModel,
 )
-from sqlalchemy import select
+from sqlalchemy import create_engine, inspect, select
+from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 settings = get_settings()
@@ -24,11 +28,45 @@ async def get_session() -> AsyncIterator[AsyncSession]:
         yield session
 
 
+def _run_migrations() -> None:
+    config = Config(str(Path(__file__).resolve().parents[4] / "alembic.ini"))
+    sync_url = settings.database_url.replace("+aiosqlite", "")
+    url = make_url(sync_url)
+
+    if url.get_backend_name() == "sqlite" and url.database:
+        sqlite_path = Path(url.database)
+        if sqlite_path.exists():
+            sync_engine = create_engine(sync_url)
+            try:
+                inspector = inspect(sync_engine)
+                tables = set(inspector.get_table_names())
+                user_columns = (
+                    {column["name"] for column in inspector.get_columns("users")}
+                    if "users" in tables
+                    else set()
+                )
+            finally:
+                sync_engine.dispose()
+
+            legacy_tables = {
+                "users",
+                "studios",
+                "roles",
+                "permissions",
+                "role_permissions",
+                "memberships",
+            }
+            has_legacy_foundation = legacy_tables.intersection(tables)
+            has_compatible_user_shape = "deleted_at" in user_columns
+
+            if has_legacy_foundation and not has_compatible_user_shape:
+                sqlite_path.unlink()
+
+    command.upgrade(config, "head")
+
+
 async def init_db() -> None:
-    # TODO(epic-2-cleanup): Move to migration-only bootstrap (Alembic)
-    # and remove create_all at runtime.
-    async with engine.begin() as connection:
-        await connection.run_sync(Base.metadata.create_all)
+    await asyncio.to_thread(_run_migrations)
 
     async with SessionFactory() as session:
         role_rows = await session.scalars(select(RoleModel))

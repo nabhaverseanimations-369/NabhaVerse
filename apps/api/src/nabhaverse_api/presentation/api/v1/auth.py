@@ -13,7 +13,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.get("/me", response_model=SessionOut)
+@router.get(
+    "/me",
+    response_model=SessionOut,
+    summary="Get current session",
+    description="Synchronize the authenticated user and return current membership context.",
+)
 async def me(
     session: Annotated[AsyncSession, Depends(get_session)],
     identity: Annotated[AuthIdentity, Depends(get_current_identity)],
@@ -22,7 +27,13 @@ async def me(
     return await service.current_session(identity)
 
 
-@router.post("/logout")
+@router.post(
+    "/logout",
+    summary="Logout",
+    description=(
+        "Acknowledge logout while client-side Clerk session revocation remains authoritative."
+    ),
+)
 async def logout() -> dict[str, str]:
     # Clerk sessions are revoked client-side; API logout endpoint is kept for
     # future server-side session revocation/audit handling.

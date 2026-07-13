@@ -77,6 +77,7 @@ class AuthService:
         membership_dto = [
             MembershipOut(
                 id=membership.id,
+                userId=membership.user_id,
                 studio=StudioOut(
                     id=membership.studio.id,
                     name=membership.studio.name,
