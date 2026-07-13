@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
+from helpers import get_primary_studio_id, make_auth_headers
 from nabhaverse_api.main import app
 
 
@@ -22,17 +23,15 @@ def test_studio_listing_supports_pagination(auth_headers: dict[str, str]) -> Non
 
 def test_studio_membership_endpoints_enforce_rbac(auth_headers: dict[str, str]) -> None:
     with TestClient(app) as client:
-        owner_session = client.get("/api/v1/auth/me", headers=auth_headers)
-        assert owner_session.status_code == 200
-        studio_id = owner_session.json()["memberships"][0]["studio"]["id"]
+        studio_id = get_primary_studio_id(client, auth_headers)
 
         target_session = client.get(
             "/api/v1/auth/me",
-            headers={
-                "X-Clerk-User-Id": "user_target_001",
-                "X-Clerk-Email": "target@nabhaverse.test",
-                "X-Clerk-Name": "Target User",
-            },
+            headers=make_auth_headers(
+                user_id="user_target_001",
+                email="target@nabhaverse.test",
+                name="Target User",
+            ),
         )
         assert target_session.status_code == 200
         target_user_id = target_session.json()["user"]["id"]

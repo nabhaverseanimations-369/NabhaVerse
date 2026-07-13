@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from typing import cast
 
 from nabhaverse_api.domain.auth.permissions import Permission, Role
+from nabhaverse_api.domain.shared.datetime_utils import utc_now
+from nabhaverse_api.infrastructure.database.base_repository import BaseRepository
 from nabhaverse_api.infrastructure.database.models import (
     CharacterModel,
     CharacterRelationshipModel,
@@ -17,14 +18,11 @@ from nabhaverse_api.infrastructure.database.models import (
     UserModel,
 )
 from sqlalchemy import delete, exists, func, or_, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.elements import ColumnElement
 
 
-class UserRepository:
-    def __init__(self, session: AsyncSession) -> None:
-        self.session = session
+class UserRepository(BaseRepository[UserModel]):
 
     async def get_by_clerk_user_id(self, clerk_user_id: str) -> UserModel | None:
         statement = select(UserModel).where(UserModel.clerk_user_id == clerk_user_id)
@@ -56,9 +54,7 @@ class UserRepository:
             avatar_url=avatar_url,
             preferences={},
         )
-        self.session.add(user)
-        await self.session.flush()
-        return user
+        return await self.add_and_flush(user)
 
     async def update_preferences(
         self,
@@ -70,9 +66,7 @@ class UserRepository:
         return user
 
 
-class RoleRepository:
-    def __init__(self, session: AsyncSession) -> None:
-        self.session = session
+class RoleRepository(BaseRepository[RoleModel]):
 
     async def get_by_name(self, role: Role) -> RoleModel | None:
         statement = select(RoleModel).where(RoleModel.name == role.value)
@@ -92,9 +86,7 @@ class RoleRepository:
         return [Permission(row.name) for row in permission_rows.all()]
 
 
-class StudioRepository:
-    def __init__(self, session: AsyncSession) -> None:
-        self.session = session
+class StudioRepository(BaseRepository[StudioModel]):
 
     async def get_by_slug(self, slug: str) -> StudioModel | None:
         statement = select(StudioModel).where(
@@ -112,20 +104,14 @@ class StudioRepository:
 
     async def create(self, *, name: str, slug: str) -> StudioModel:
         studio = StudioModel(name=name, slug=slug)
-        self.session.add(studio)
-        await self.session.flush()
-        return studio
+        return await self.add_and_flush(studio)
 
 
-class MembershipRepository:
-    def __init__(self, session: AsyncSession) -> None:
-        self.session = session
+class MembershipRepository(BaseRepository[MembershipModel]):
 
     async def create(self, *, user_id: str, studio_id: str, role_id: str) -> MembershipModel:
         membership = MembershipModel(user_id=user_id, studio_id=studio_id, role_id=role_id)
-        self.session.add(membership)
-        await self.session.flush()
-        return membership
+        return await self.add_and_flush(membership)
 
     async def get_by_id(self, membership_id: str) -> MembershipModel | None:
         statement = (
@@ -188,19 +174,17 @@ class MembershipRepository:
             )
             .where(MembershipModel.studio_id == studio_id, MembershipModel.deleted_at.is_(None))
             .order_by(MembershipModel.created_at.desc())
-            .limit(limit)
-            .offset(offset)
         )
+        statement = self.paginate(statement, limit=limit, offset=offset)
         memberships = await self.session.scalars(statement)
         return list(memberships.all())
 
     async def count_for_studio(self, *, studio_id: str) -> int:
-        statement = select(MembershipModel).where(
+        filters = (
             MembershipModel.studio_id == studio_id,
             MembershipModel.deleted_at.is_(None),
         )
-        memberships = await self.session.scalars(statement)
-        return len(memberships.all())
+        return await self.count_by(MembershipModel, *filters)
 
     async def update_role(self, membership: MembershipModel, role_id: str) -> MembershipModel:
         membership.role_id = role_id
@@ -209,9 +193,7 @@ class MembershipRepository:
         return membership
 
 
-class CharacterRepository:
-    def __init__(self, session: AsyncSession) -> None:
-        self.session = session
+class CharacterRepository(BaseRepository[CharacterModel]):
 
     async def create(
         self,
@@ -235,9 +217,7 @@ class CharacterRepository:
             avatar_url=avatar_url,
             is_favorite=is_favorite,
         )
-        self.session.add(character)
-        await self.session.flush()
-        return character
+        return await self.add_and_flush(character)
 
     async def get_by_id(self, *, studio_id: str, character_id: str) -> CharacterModel | None:
         statement = (
@@ -352,9 +332,8 @@ class CharacterRepository:
                 )
             )
             .order_by(CharacterModel.updated_at.desc())
-            .limit(limit)
-            .offset(offset)
         )
+        statement = self.paginate(statement, limit=limit, offset=offset)
         rows = await self.session.scalars(statement)
         return list(rows.all())
 
@@ -407,14 +386,12 @@ class CharacterRepository:
         return character
 
     async def soft_delete(self, character: CharacterModel) -> CharacterModel:
-        character.deleted_at = datetime.now(UTC)
+        character.deleted_at = utc_now()
         await self.session.flush()
         return character
 
 
-class CharacterTagRepository:
-    def __init__(self, session: AsyncSession) -> None:
-        self.session = session
+class CharacterTagRepository(BaseRepository[CharacterTagModel]):
 
     async def list_for_character(self, character_id: str) -> list[CharacterTagModel]:
         statement = (
@@ -433,7 +410,7 @@ class CharacterTagRepository:
         existing_map = {row.tag.lower(): row for row in existing}
         target = {tag.strip().lower(): tag.strip() for tag in tags if tag.strip()}
 
-        now = datetime.now(UTC)
+        now = utc_now()
         for row in existing:
             if row.tag.lower() not in target:
                 row.deleted_at = now
@@ -441,9 +418,8 @@ class CharacterTagRepository:
         for key, value in target.items():
             if key in existing_map and existing_map[key].deleted_at is None:
                 continue
-            self.session.add(CharacterTagModel(character_id=character_id, tag=value))
+            await self.add_and_flush(CharacterTagModel(character_id=character_id, tag=value))
 
-        await self.session.flush()
         return await self.list_for_character(character_id)
 
     async def delete_for_character(self, character_id: str) -> None:
@@ -453,9 +429,7 @@ class CharacterTagRepository:
         await self.session.flush()
 
 
-class CharacterVersionRepository:
-    def __init__(self, session: AsyncSession) -> None:
-        self.session = session
+class CharacterVersionRepository(BaseRepository[CharacterVersionModel]):
 
     async def create(
         self,
@@ -475,9 +449,7 @@ class CharacterVersionRepository:
             snapshot=snapshot,
             is_active=is_active,
         )
-        self.session.add(version)
-        await self.session.flush()
-        return version
+        return await self.add_and_flush(version)
 
     async def list_for_character(
         self,
@@ -494,9 +466,8 @@ class CharacterVersionRepository:
                 CharacterVersionModel.deleted_at.is_(None),
             )
             .order_by(CharacterVersionModel.created_at.desc())
-            .limit(limit)
-            .offset(offset)
         )
+        statement = self.paginate(statement, limit=limit, offset=offset)
         versions = await self.session.scalars(statement)
         return list(versions.all())
 
@@ -534,9 +505,7 @@ class CharacterVersionRepository:
         await self.session.flush()
 
 
-class CharacterRelationshipRepository:
-    def __init__(self, session: AsyncSession) -> None:
-        self.session = session
+class CharacterRelationshipRepository(BaseRepository[CharacterRelationshipModel]):
 
     async def create(
         self,
@@ -554,9 +523,7 @@ class CharacterRelationshipRepository:
             notes=notes,
             created_by_user_id=created_by_user_id,
         )
-        self.session.add(relationship)
-        await self.session.flush()
-        return relationship
+        return await self.add_and_flush(relationship)
 
     async def get_by_pair(
         self,
@@ -588,9 +555,8 @@ class CharacterRelationshipRepository:
                 CharacterRelationshipModel.deleted_at.is_(None),
             )
             .order_by(CharacterRelationshipModel.created_at.desc())
-            .limit(limit)
-            .offset(offset)
         )
+        statement = self.paginate(statement, limit=limit, offset=offset)
         relationships = await self.session.scalars(statement)
         return list(relationships.all())
 

@@ -6,7 +6,8 @@ from fastapi import APIRouter, Depends, Path, Query, status
 from nabhaverse_api.application.dto.auth_dto import CreateStudioIn, StudioOut, StudioPageOut
 from nabhaverse_api.application.services.studio_service import StudioService
 from nabhaverse_api.infrastructure.database.session import get_session
-from nabhaverse_api.presentation.api.dependencies import AuthContext, get_current_auth_context
+from nabhaverse_api.presentation.api.dependencies import CurrentAuthContext
+from nabhaverse_api.presentation.api.foundation import COMMON_ERROR_RESPONSES
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/studios", tags=["studios"])
@@ -17,9 +18,10 @@ router = APIRouter(prefix="/studios", tags=["studios"])
     response_model=StudioPageOut,
     summary="List accessible studios",
     description="Return the current user's studio memberships with pagination.",
+    responses=COMMON_ERROR_RESPONSES,
 )
 async def list_studios(
-    context: Annotated[AuthContext, Depends(get_current_auth_context)],
+    context: CurrentAuthContext,
     session: Annotated[AsyncSession, Depends(get_session)],
     limit: Annotated[int, Query(ge=1, le=100)] = 25,
     offset: Annotated[int, Query(ge=0)] = 0,
@@ -38,10 +40,11 @@ async def list_studios(
     status_code=status.HTTP_201_CREATED,
     summary="Create studio",
     description="Create a studio and assign the current user as owner.",
+    responses=COMMON_ERROR_RESPONSES,
 )
 async def create_studio(
     payload: CreateStudioIn,
-    context: Annotated[AuthContext, Depends(get_current_auth_context)],
+    context: CurrentAuthContext,
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> StudioOut:
     service = StudioService(session)
@@ -53,10 +56,11 @@ async def create_studio(
     response_model=StudioOut,
     summary="Get studio",
     description="Return a studio visible to the current user.",
+    responses=COMMON_ERROR_RESPONSES,
 )
 async def get_studio(
     studio_id: Annotated[str, Path(description="Studio identifier")],
-    context: Annotated[AuthContext, Depends(get_current_auth_context)],
+    context: CurrentAuthContext,
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> StudioOut:
     service = StudioService(session)

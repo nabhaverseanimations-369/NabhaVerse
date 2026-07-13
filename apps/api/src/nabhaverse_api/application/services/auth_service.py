@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from nabhaverse_api.application.dto.auth_dto import MembershipOut, SessionOut, StudioOut, UserOut
 from nabhaverse_api.domain.auth.permissions import ROLE_PERMISSIONS, Role
+from nabhaverse_api.domain.shared.slug import slugify
 from nabhaverse_api.infrastructure.auth.clerk import AuthIdentity
 from nabhaverse_api.infrastructure.database.repositories import (
     MembershipRepository,
@@ -12,12 +13,6 @@ from nabhaverse_api.infrastructure.database.repositories import (
     UserRepository,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
-
-
-def slugify(value: str) -> str:
-    normalized = "".join(char.lower() if char.isalnum() else "-" for char in value)
-    slug = "-".join(part for part in normalized.split("-") if part)
-    return slug or "studio"
 
 
 @dataclass(frozen=True)
@@ -47,7 +42,7 @@ class AuthService:
         memberships = await self.memberships.list_for_user(user.id)
         if not memberships:
             default_name = f"{user.full_name or 'Creator'} Studio".strip()
-            base_slug = slugify(default_name)
+            base_slug = slugify(default_name, fallback="studio")
             slug = base_slug
             collision_index = 1
             while await self.studios.get_by_slug(slug) is not None:

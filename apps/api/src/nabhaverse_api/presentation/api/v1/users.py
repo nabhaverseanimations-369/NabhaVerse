@@ -6,7 +6,8 @@ from fastapi import APIRouter, Depends
 from nabhaverse_api.application.dto.auth_dto import UpdatePreferencesIn, UserOut
 from nabhaverse_api.application.services.user_service import UserService
 from nabhaverse_api.infrastructure.database.session import get_session
-from nabhaverse_api.presentation.api.dependencies import AuthContext, get_current_auth_context
+from nabhaverse_api.presentation.api.dependencies import CurrentAuthContext
+from nabhaverse_api.presentation.api.foundation import COMMON_ERROR_RESPONSES
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -17,9 +18,10 @@ router = APIRouter(prefix="/users", tags=["users"])
     response_model=UserOut,
     summary="Get current profile",
     description="Return the authenticated backend user profile synchronized from Clerk.",
+    responses=COMMON_ERROR_RESPONSES,
 )
 async def get_me(
-    context: Annotated[AuthContext, Depends(get_current_auth_context)],
+    context: CurrentAuthContext,
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> UserOut:
     service = UserService(session)
@@ -31,10 +33,11 @@ async def get_me(
     response_model=UserOut,
     summary="Update profile preferences",
     description="Merge profile preferences for the authenticated user.",
+    responses=COMMON_ERROR_RESPONSES,
 )
 async def update_preferences(
     payload: UpdatePreferencesIn,
-    context: Annotated[AuthContext, Depends(get_current_auth_context)],
+    context: CurrentAuthContext,
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> UserOut:
     service = UserService(session)

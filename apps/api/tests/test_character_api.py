@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
+from helpers import get_primary_studio_id, make_auth_headers
 from nabhaverse_api.main import app
 
 
 def test_character_endpoints_crud_and_nested_routes(auth_headers: dict[str, str]) -> None:
     with TestClient(app) as client:
-        session_response = client.get("/api/v1/auth/me", headers=auth_headers)
-        assert session_response.status_code == 200
-        studio_id = session_response.json()["memberships"][0]["studio"]["id"]
+        studio_id = get_primary_studio_id(client, auth_headers)
 
         create_response = client.post(
             f"/api/v1/characters?studioId={studio_id}",
@@ -109,15 +108,13 @@ def test_character_create_rejects_owner_outside_studio(
     auth_headers: dict[str, str],
 ) -> None:
     with TestClient(app) as client:
-        owner_session = client.get("/api/v1/auth/me", headers=auth_headers)
-        assert owner_session.status_code == 200
-        studio_id = owner_session.json()["memberships"][0]["studio"]["id"]
+        studio_id = get_primary_studio_id(client, auth_headers)
 
-        external_headers = {
-            "X-Clerk-User-Id": "user_external_owner_002",
-            "X-Clerk-Email": "external-owner@nabhaverse.test",
-            "X-Clerk-Name": "External Owner",
-        }
+        external_headers = make_auth_headers(
+            user_id="user_external_owner_002",
+            email="external-owner@nabhaverse.test",
+            name="External Owner",
+        )
         external_session = client.get("/api/v1/auth/me", headers=external_headers)
         assert external_session.status_code == 200
         external_user_id = external_session.json()["user"]["id"]

@@ -4,6 +4,9 @@ from dataclasses import dataclass
 
 from fastapi import HTTPException, status
 
+from nabhaverse_api.domain.shared.slug import slugify
+from nabhaverse_api.domain.shared.validation import ensure_allowed
+
 VALID_CHARACTER_STATUSES = {"draft", "in-review", "approved", "archived"}
 VALID_RELATIONSHIP_TYPES = {"ally", "rival", "mentor", "family", "team"}
 
@@ -18,17 +21,20 @@ class CharacterFilters:
 
 class CharacterDomainService:
     def slugify(self, value: str) -> str:
-        normalized = "".join(char.lower() if char.isalnum() else "-" for char in value)
-        slug = "-".join(part for part in normalized.split("-") if part)
-        return slug or "character"
+        return slugify(value, fallback="character")
 
     def validate_status(self, status_value: str) -> str:
-        if status_value not in VALID_CHARACTER_STATUSES:
+        try:
+            return ensure_allowed(
+                field_name="character status",
+                value=status_value,
+                allowed=VALID_CHARACTER_STATUSES,
+            )
+        except ValueError as exc:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Invalid character status",
-            )
-        return status_value
+            ) from exc
 
     def normalize_tags(self, tags: list[str]) -> list[str]:
         normalized: list[str] = []
@@ -67,12 +73,17 @@ class CharacterDomainService:
         return normalized
 
     def validate_relationship_type(self, relationship_type: str) -> str:
-        if relationship_type not in VALID_RELATIONSHIP_TYPES:
+        try:
+            return ensure_allowed(
+                field_name="relationship type",
+                value=relationship_type,
+                allowed=VALID_RELATIONSHIP_TYPES,
+            )
+        except ValueError as exc:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Invalid relationship type",
-            )
-        return relationship_type
+            ) from exc
 
     def validate_relationship_pair(self, *, character_id: str, related_character_id: str) -> None:
         if character_id == related_character_id:

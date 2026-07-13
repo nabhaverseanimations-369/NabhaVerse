@@ -11,7 +11,8 @@ from nabhaverse_api.application.dto.auth_dto import (
 )
 from nabhaverse_api.application.services.membership_service import MembershipService
 from nabhaverse_api.infrastructure.database.session import get_session
-from nabhaverse_api.presentation.api.dependencies import AuthContext, get_current_auth_context
+from nabhaverse_api.presentation.api.dependencies import CurrentAuthContext
+from nabhaverse_api.presentation.api.foundation import COMMON_ERROR_RESPONSES
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/studios/{studio_id}/memberships", tags=["memberships"])
@@ -24,10 +25,11 @@ router = APIRouter(prefix="/studios/{studio_id}/memberships", tags=["memberships
     description=(
         "List memberships for a studio with pagination. " "Requires member-management permission."
     ),
+    responses=COMMON_ERROR_RESPONSES,
 )
 async def list_memberships(
     studio_id: Annotated[str, Path(description="Studio identifier")],
-    context: Annotated[AuthContext, Depends(get_current_auth_context)],
+    context: CurrentAuthContext,
     session: Annotated[AsyncSession, Depends(get_session)],
     limit: Annotated[int, Query(ge=1, le=100)] = 25,
     offset: Annotated[int, Query(ge=0)] = 0,
@@ -50,11 +52,12 @@ async def list_memberships(
         "Add an existing user to a studio with an assigned role. "
         "Requires member-management permission."
     ),
+    responses=COMMON_ERROR_RESPONSES,
 )
 async def create_membership(
     studio_id: Annotated[str, Path(description="Studio identifier")],
     payload: CreateMembershipIn,
-    context: Annotated[AuthContext, Depends(get_current_auth_context)],
+    context: CurrentAuthContext,
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> MembershipOut:
     service = MembershipService(session)
@@ -71,12 +74,13 @@ async def create_membership(
     response_model=MembershipOut,
     summary="Assign membership role",
     description="Update a member's role inside a studio. Requires member-management permission.",
+    responses=COMMON_ERROR_RESPONSES,
 )
 async def update_membership_role(
     studio_id: Annotated[str, Path(description="Studio identifier")],
     membership_id: Annotated[str, Path(description="Membership identifier")],
     payload: UpdateMembershipRoleIn,
-    context: Annotated[AuthContext, Depends(get_current_auth_context)],
+    context: CurrentAuthContext,
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> MembershipOut:
     service = MembershipService(session)

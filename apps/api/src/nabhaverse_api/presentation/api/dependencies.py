@@ -66,3 +66,7 @@ async def get_current_auth_context(
 ) -> AuthContext:
     service = AuthService(session)
     return await service.ensure_user(identity)
+
+
+CurrentAuthContext = Annotated[AuthContext, Depends(get_current_auth_context)]
+CurrentIdentity = Annotated[AuthIdentity, Depends(get_current_identity)]
