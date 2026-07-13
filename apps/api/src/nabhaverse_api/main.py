@@ -3,9 +3,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from nabhaverse_api.infrastructure.config import get_settings
-from nabhaverse_api.infrastructure.database.session import init_db
+from nabhaverse_api.infrastructure.database.session import SessionFactory, init_db
 from nabhaverse_api.presentation.api.v1.router import api_router
 
 
@@ -19,7 +20,7 @@ settings = get_settings()
 
 app = FastAPI(
     title=settings.app_name,
-    description="Authentication and identity services for NabhaVerse Studio.",
+    description="Identity, studio, membership, and authorization services for NabhaVerse Studio.",
     version=settings.app_version,
     lifespan=lifespan,
 )
@@ -35,6 +36,23 @@ app.add_middleware(
 app.include_router(api_router)
 
 
-@app.get("/health", tags=["platform"])
+@app.get(
+    "/health",
+    tags=["platform"],
+    summary="Liveness check",
+    description="Return a basic liveness response for the API process.",
+)
 def healthcheck() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get(
+    "/health/readiness",
+    tags=["platform"],
+    summary="Readiness check",
+    description="Verify that the API can reach the configured database.",
+)
+async def readiness_check() -> dict[str, str]:
+    async with SessionFactory() as session:
+        await session.execute(text("SELECT 1"))
+    return {"status": "ready"}

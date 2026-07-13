@@ -14,6 +14,7 @@ class StudioOut(BaseModel):
 
 class MembershipOut(BaseModel):
     id: str
+    user_id: str = Field(alias="userId")
     studio: StudioOut
     role: Role
     permissions: list[Permission]
@@ -39,3 +40,28 @@ class UpdatePreferencesIn(BaseModel):
 
 class CreateStudioIn(BaseModel):
     name: str
+
+
+class PaginationOut(BaseModel):
+    total: int
+    limit: int
+    offset: int
+
+
+class MembershipPageOut(BaseModel):
+    items: list[MembershipOut]
+    pagination: PaginationOut
+
+
+class StudioPageOut(BaseModel):
+    items: list[MembershipOut]
+    pagination: PaginationOut
+
+
+class CreateMembershipIn(BaseModel):
+    user_id: str = Field(alias="userId")
+    role: Role
+
+
+class UpdateMembershipRoleIn(BaseModel):
+    role: Role

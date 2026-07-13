@@ -25,7 +25,14 @@ class UserRepository:
         return cast(UserModel | None, await self.session.scalar(statement))
 
     async def get_by_id(self, user_id: str) -> UserModel | None:
-        statement = select(UserModel).where(UserModel.id == user_id)
+        statement = select(UserModel).where(UserModel.id == user_id, UserModel.deleted_at.is_(None))
+        return cast(UserModel | None, await self.session.scalar(statement))
+
+    async def get_by_email(self, email: str) -> UserModel | None:
+        statement = select(UserModel).where(
+            UserModel.email == email,
+            UserModel.deleted_at.is_(None),
+        )
         return cast(UserModel | None, await self.session.scalar(statement))
 
     async def create(
@@ -65,7 +72,11 @@ class RoleRepository:
         statement = select(RoleModel).where(RoleModel.name == role.value)
         return cast(RoleModel | None, await self.session.scalar(statement))
 
-    async def permissions_for_role(self, role_id: int) -> list[Permission]:
+    async def get_by_id(self, role_id: str) -> RoleModel | None:
+        statement = select(RoleModel).where(RoleModel.id == role_id)
+        return cast(RoleModel | None, await self.session.scalar(statement))
+
+    async def permissions_for_role(self, role_id: str) -> list[Permission]:
         statement = (
             select(PermissionModel)
             .join(RolePermissionModel, RolePermissionModel.permission_id == PermissionModel.id)
@@ -80,7 +91,17 @@ class StudioRepository:
         self.session = session
 
     async def get_by_slug(self, slug: str) -> StudioModel | None:
-        statement = select(StudioModel).where(StudioModel.slug == slug)
+        statement = select(StudioModel).where(
+            StudioModel.slug == slug,
+            StudioModel.deleted_at.is_(None),
+        )
+        return cast(StudioModel | None, await self.session.scalar(statement))
+
+    async def get_by_id(self, studio_id: str) -> StudioModel | None:
+        statement = select(StudioModel).where(
+            StudioModel.id == studio_id,
+            StudioModel.deleted_at.is_(None),
+        )
         return cast(StudioModel | None, await self.session.scalar(statement))
 
     async def create(self, *, name: str, slug: str) -> StudioModel:
@@ -94,11 +115,43 @@ class MembershipRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def create(self, *, user_id: str, studio_id: str, role_id: int) -> MembershipModel:
+    async def create(self, *, user_id: str, studio_id: str, role_id: str) -> MembershipModel:
         membership = MembershipModel(user_id=user_id, studio_id=studio_id, role_id=role_id)
         self.session.add(membership)
         await self.session.flush()
         return membership
+
+    async def get_by_id(self, membership_id: str) -> MembershipModel | None:
+        statement = (
+            select(MembershipModel)
+            .execution_options(populate_existing=True)
+            .options(
+                selectinload(MembershipModel.studio),
+                selectinload(MembershipModel.role),
+            )
+            .where(MembershipModel.id == membership_id, MembershipModel.deleted_at.is_(None))
+        )
+        return cast(MembershipModel | None, await self.session.scalar(statement))
+
+    async def get_by_user_and_studio(
+        self,
+        *,
+        user_id: str,
+        studio_id: str,
+    ) -> MembershipModel | None:
+        statement = (
+            select(MembershipModel)
+            .options(
+                selectinload(MembershipModel.studio),
+                selectinload(MembershipModel.role),
+            )
+            .where(
+                MembershipModel.user_id == user_id,
+                MembershipModel.studio_id == studio_id,
+                MembershipModel.deleted_at.is_(None),
+            )
+        )
+        return cast(MembershipModel | None, await self.session.scalar(statement))
 
     async def list_for_user(self, user_id: str) -> list[MembershipModel]:
         statement = (
@@ -109,7 +162,42 @@ class MembershipRepository:
             )
             .join(MembershipModel.studio)
             .join(MembershipModel.role)
-            .where(MembershipModel.user_id == user_id)
+            .where(MembershipModel.user_id == user_id, MembershipModel.deleted_at.is_(None))
         )
         memberships = await self.session.scalars(statement)
         return list(memberships.all())
+
+    async def list_for_studio(
+        self,
+        *,
+        studio_id: str,
+        limit: int,
+        offset: int,
+    ) -> list[MembershipModel]:
+        statement = (
+            select(MembershipModel)
+            .options(
+                selectinload(MembershipModel.studio),
+                selectinload(MembershipModel.role),
+            )
+            .where(MembershipModel.studio_id == studio_id, MembershipModel.deleted_at.is_(None))
+            .order_by(MembershipModel.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        memberships = await self.session.scalars(statement)
+        return list(memberships.all())
+
+    async def count_for_studio(self, *, studio_id: str) -> int:
+        statement = select(MembershipModel).where(
+            MembershipModel.studio_id == studio_id,
+            MembershipModel.deleted_at.is_(None),
+        )
+        memberships = await self.session.scalars(statement)
+        return len(memberships.all())
+
+    async def update_role(self, membership: MembershipModel, role_id: str) -> MembershipModel:
+        membership.role_id = role_id
+        await self.session.flush()
+        await self.session.refresh(membership)
+        return membership
