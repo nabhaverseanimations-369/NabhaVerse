@@ -3,6 +3,10 @@ from __future__ import annotations
 import pytest
 from nabhaverse_api.domain.auth.permissions import Role
 from nabhaverse_api.infrastructure.database.repositories import (
+    CharacterRelationshipRepository,
+    CharacterRepository,
+    CharacterTagRepository,
+    CharacterVersionRepository,
     MembershipRepository,
     RoleRepository,
     StudioRepository,
@@ -65,3 +69,97 @@ async def test_studio_and_membership_repositories(db_session: AsyncSession) -> N
 
     count = await memberships.count_for_studio(studio_id=studio.id)
     assert count == 1
+
+
+@pytest.mark.anyio
+async def test_character_repositories_support_search_and_relations(
+    db_session: AsyncSession,
+) -> None:
+    users = UserRepository(db_session)
+    studios = StudioRepository(db_session)
+    roles = RoleRepository(db_session)
+    memberships = MembershipRepository(db_session)
+    characters = CharacterRepository(db_session)
+    tags = CharacterTagRepository(db_session)
+    versions = CharacterVersionRepository(db_session)
+    relationships = CharacterRelationshipRepository(db_session)
+
+    owner = await users.create(
+        clerk_user_id="clerk_character_owner_repo",
+        email="character-owner@nabhaverse.test",
+        full_name="Character Owner",
+        avatar_url=None,
+    )
+    peer = await users.create(
+        clerk_user_id="clerk_character_peer_repo",
+        email="character-peer@nabhaverse.test",
+        full_name="Character Peer",
+        avatar_url=None,
+    )
+    studio = await studios.create(name="Character Studio", slug="character-studio")
+    owner_role = await roles.get_by_name(Role.OWNER)
+    assert owner_role is not None
+
+    await memberships.create(user_id=owner.id, studio_id=studio.id, role_id=owner_role.id)
+
+    character = await characters.create(
+        studio_id=studio.id,
+        owner_user_id=owner.id,
+        slug="aurora-vale",
+        name="Aurora Vale",
+        status="approved",
+        summary="Heroic lead character",
+        avatar_url=None,
+        is_favorite=True,
+    )
+    await tags.replace_tags(character_id=character.id, tags=["lead", "pilot"])
+    version = await versions.create(
+        character_id=character.id,
+        author_user_id=owner.id,
+        label="v1.0",
+        summary="Initial baseline",
+        snapshot={"kind": "initial"},
+        is_active=True,
+    )
+    await characters.set_active_version(character, version.id)
+
+    counterpart = await characters.create(
+        studio_id=studio.id,
+        owner_user_id=peer.id,
+        slug="nox-7",
+        name="Nox-7",
+        status="in-review",
+        summary="Android tactician",
+        avatar_url=None,
+        is_favorite=False,
+    )
+    await relationships.create(
+        character_id=character.id,
+        related_character_id=counterpart.id,
+        relationship_type="team",
+        notes="Collaborative tactical pair.",
+        created_by_user_id=owner.id,
+    )
+    await db_session.commit()
+
+    filtered = await characters.list_for_studio(
+        studio_id=studio.id,
+        query="aurora",
+        tags=["lead"],
+        status=["approved"],
+        owner_user_id=owner.id,
+        limit=10,
+        offset=0,
+    )
+    assert len(filtered) == 1
+    assert filtered[0].name == "Aurora Vale"
+
+    version_rows = await versions.list_for_character(character_id=character.id, limit=10, offset=0)
+    assert len(version_rows) == 1
+    assert version_rows[0].label == "v1.0"
+
+    relation_rows = await relationships.list_for_character(
+        character_id=character.id, limit=10, offset=0
+    )
+    assert len(relation_rows) == 1
+    assert relation_rows[0].related_character_id == counterpart.id
